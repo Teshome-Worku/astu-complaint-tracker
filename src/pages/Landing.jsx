@@ -53,10 +53,11 @@ function Landing() {
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
             {ctaLinks.map((linkItem) => (
               <Link key={linkItem.to} className={linkItem.className} to={linkItem.to}>
-                {linkItem.label}
+                {linkItem.label} 
               </Link>
             ))}
           </div>
+          <p className="mt-4 text-sm text-slate-400">Login or register to access your dashboard.</p>
         </div>
       </section>
 

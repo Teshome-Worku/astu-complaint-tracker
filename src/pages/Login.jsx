@@ -40,7 +40,7 @@ function Login() {
         return;
       }
 
-      // Save logged user temporarily
+      // Save logged user object temporarily (used by ProtectedRoute)
       localStorage.setItem("user", JSON.stringify(user));
 
       // Role-based redirect

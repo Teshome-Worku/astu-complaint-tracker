@@ -13,12 +13,21 @@
             "password": "@iPj95Nh6S8CM32",
             "role": "student"
         },
+
+
         {
-            "id": "admin1",
-            "name": "Admin User",
-            "email": "admin@astu.com",
-            "password": "1234",
-            "role": "admin"
+            "id": "5cf8",
+            "name": "Teshe",
+            "email": "teshome.worku@astu.edu.et",
+            "password": "12345",
+            "role": "student"
+        },
+        {
+            "id": "f492",
+            "name": "Teshe",
+            "email": "teshome@astu.edu.et",
+            "password": "123456",
+            "role": "student"
         },
         {
             "id": "staff1",
@@ -26,9 +35,16 @@
             "email": "staff@astu.com",
             "password": "1234",
             "role": "staff"
+        },
+        {
+            "id": "admin1",
+            "name": "Admin User",
+            "email": "admin@astu.com",
+            "password": "1234",
+            "role": "admin"
         }
-
     ],
+    "staffs": [],
+    "admins": [],
     "complaints": []
-
 }

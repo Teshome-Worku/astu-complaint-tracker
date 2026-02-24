@@ -35,6 +35,11 @@ function Register() {
         setTimeout(() => setError(""), 3000);
         return;
       }
+      if(!formData.email.endsWith("@astu.edu.et")) {
+        setError("Only ASTU email addresses are allowed");
+        setTimeout(() => setError(""), 3000);
+        return;
+      }
 
       // Create new user with default role
       await axios.post("http://localhost:5000/users", {
@@ -75,6 +80,8 @@ function Register() {
           <h2 className="text-2xl font-bold text-white mb-6 text-center">
             Create Account
           </h2>
+
+          <p className="mt-1 mb-4 text-xs text-slate-400 text-center">Register is for ASTU students only. If you are staff or an administrator, please contact your administrator or support.</p>
 
           {error && (
             <p className="mb-4 text-red-500 text-sm text-center">{error}</p>
