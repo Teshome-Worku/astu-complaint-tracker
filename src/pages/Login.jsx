@@ -25,26 +25,31 @@ function Login() {
 
     try {
       const res = await axios.get(
-        `http://localhost:5000/users?email=${formData.email}&password=${formData.password}`
+        `http://localhost:5000/users?email=${formData.email}`
       );
 
-      if (res.data.length === 0) {
+    //   if (res.data.length === 0) {
+    //     setError("Invalid email or password");
+    //     return;
+    //   }
+
+
+      const user = res.data[0];
+      if(!user || user.password !== formData.password) {
         setError("Invalid email or password");
         return;
       }
-
-      const user = res.data[0];
 
       // Save logged user temporarily
       localStorage.setItem("user", JSON.stringify(user));
 
       // Role-based redirect
       if (user.role === "admin") {
-        navigate("/admin");
+        navigate("/admin-dashboard");
       } else if (user.role === "staff") {
-        navigate("/staff");
+        navigate("/staff-dashboard");
       } else {
-        navigate("/student");
+        navigate("/student-dashboard");
       }
     } catch (err) {
       setError("Something went wrong");

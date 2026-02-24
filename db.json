@@ -14,12 +14,14 @@
             "role": "student"
         },
         {
+            "id": "admin1",
             "name": "Admin User",
             "email": "admin@astu.com",
             "password": "1234",
             "role": "admin"
         },
         {
+            "id": "staff1",
             "name": "Staff User",
             "email": "staff@astu.com",
             "password": "1234",

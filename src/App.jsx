@@ -2,11 +2,41 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import AdminDashboard from "./pages/AdminDashboard";
+import StudentDashboard from "./pages/StudentDashboard";
+import StaffSDashboard from "./pages/StaffDashboard"; 
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const routes = [
   { path: "/", element: <Landing /> },
   { path: "/login", element: <Login /> },
   { path: "/register", element: <Register /> },
+  { 
+    path: "/admin-dashboard", 
+    element: (
+      <ProtectedRoute allowedRole="admin">
+        <AdminDashboard />
+      </ProtectedRoute>
+    )
+  },
+  
+  { 
+    path: "/staff-dashboard", 
+    element: (
+      <ProtectedRoute allowedRole="staff">
+        <StaffSDashboard />
+      </ProtectedRoute>
+    )
+  },
+  
+  { 
+    path: "/student-dashboard", 
+    element: (
+      <ProtectedRoute allowedRole="student">
+        <StudentDashboard />
+      </ProtectedRoute>
+    )
+  },
 ];
 
 function App() {
