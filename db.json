@@ -4,5 +4,19 @@
         "name": "John Doe",
         "email": "john@example.com"
     }],
-    "complaints": []
+    "complaints": [{
+            "id": 1,
+            "userId": 1,
+            "title": "Broken Streetlight",
+            "description": "The streetlight on Main St. is broken and needs repair.",
+            "status": "Open"
+        },
+        {
+            "id": 2,
+            "userId": 1,
+            "title": "Pothole on Elm St.",
+            "description": "There is a large pothole on Elm St. that is causing issues for drivers.",
+            "status": "In Progress"
+        }
+    ]
 }
