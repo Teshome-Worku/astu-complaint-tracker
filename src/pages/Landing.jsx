@@ -23,13 +23,13 @@ const ctaLinks = [
     to: "/login",
     label: "Login",
     className:
-      "rounded-full bg-white px-8 py-3 text-sm font-semibold text-indigo-700 shadow-lg shadow-indigo-900/30 transition hover:-translate-y-0.5 hover:bg-slate-100",
+      "rounded-full bg-white px-8 py-3 text-sm font-semibold text-indigo-700 shadow-lg shadow-indigo-900/30 transition hover:-translate-y-0.5 hover:bg-slate-100 scale-105 hover:shadow-indigo-900/50",
   },
   {
     to: "/register",
     label: "Register",
     className:
-      "rounded-full border border-white/80 px-8 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/10",
+      "rounded-full border border-white/80 px-8 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/10 scale-105 hover:border-white/100",
   },
 ];
 

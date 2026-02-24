@@ -17,7 +17,7 @@ function AuthFormPage({
   footerLinkTo,
 }) {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-100 via-indigo-50 to-slate-200 px-4 py-12">
+    <main className="min-h-screen bg-linear-to-br from-slate-100 via-indigo-50 to-slate-200 px-4 py-12">
       <div className="mx-auto w-full max-w-md rounded-2xl bg-white p-8 shadow-xl shadow-slate-300/60">
         <h1 className="text-3xl font-bold tracking-tight text-slate-900">{title}</h1>
         <p className="mt-2 text-sm text-slate-600">{subtitle}</p>
