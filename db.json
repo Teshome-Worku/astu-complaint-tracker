@@ -1,13 +1,19 @@
 {
-    "users": [
-
-        {
-            "id": "5c20",
-            "name": "Teshome Worku",
-            "email": "teshomeworku96@gmail.com",
-            "password": "123456",
-            "role": "student"
-        }
-    ],
-    "complaints": []
+  "users": [
+    {
+      "id": "5c20",
+      "name": "Teshome Worku",
+      "email": "teshomeworku96@gmail.com",
+      "password": "123456",
+      "role": "student"
+    },
+    {
+      "id": "686e",
+      "name": "Teshe",
+      "email": "tesheworku1251@gmail.com",
+      "password": "@iPj95Nh6S8CM32",
+      "role": "student"
+    }
+  ],
+  "complaints": []
 }
