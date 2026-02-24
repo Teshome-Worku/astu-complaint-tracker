@@ -1,22 +1,13 @@
 {
-    "users": [{
-        "id": 1,
-        "name": "John Doe",
-        "email": "john@example.com"
-    }],
-    "complaints": [{
-            "id": 1,
-            "userId": 1,
-            "title": "Broken Streetlight",
-            "description": "The streetlight on Main St. is broken and needs repair.",
-            "status": "Open"
-        },
+    "users": [
+
         {
-            "id": 2,
-            "userId": 1,
-            "title": "Pothole on Elm St.",
-            "description": "There is a large pothole on Elm St. that is causing issues for drivers.",
-            "status": "In Progress"
+            "id": "5c20",
+            "name": "Teshome Worku",
+            "email": "teshomeworku96@gmail.com",
+            "password": "123456",
+            "role": "student"
         }
-    ]
+    ],
+    "complaints": []
 }

@@ -32,6 +32,7 @@ function Register() {
 
       if (res.data.length > 0) {
         setError("Email already registered");
+        setTimeout(() => setError(""), 3000);
         return;
       }
 
