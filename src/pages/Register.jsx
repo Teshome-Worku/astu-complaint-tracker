@@ -1,46 +1,42 @@
-import React from 'react'
+import AuthFormPage from "../components/AuthFormPage";
 
-export default function Register() {
+const registerFields = [
+  {
+    name: "name",
+    label: "Full name",
+    placeholder: "Jane Doe",
+    type: "text",
+    autoComplete: "name",
+  },
+  {
+    name: "email",
+    label: "Email",
+    placeholder: "you@example.com",
+    type: "email",
+    autoComplete: "email",
+  },
+  {
+    name: "password",
+    label: "Password",
+    placeholder: "Create a strong password",
+    type: "password",
+    autoComplete: "new-password",
+  },
+];
+
+function Register() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md p-8 bg-white rounded shadow">
-        <h1 className="text-2xl font-semibold mb-6">Create account</h1>
-        <form>
-          <label className="block mb-3">
-            <span className="block text-sm font-medium text-gray-700">Name</span>
-            <input
-              type="text"
-              name="name"
-              className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
-            />
-          </label>
-
-          <label className="block mb-3">
-            <span className="block text-sm font-medium text-gray-700">Email</span>
-            <input
-              type="email"
-              name="email"
-              className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
-            />
-          </label>
-
-          <label className="block mb-4">
-            <span className="block text-sm font-medium text-gray-700">Password</span>
-            <input
-              type="password"
-              name="password"
-              className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
-            />
-          </label>
-
-          <button
-            type="submit"
-            className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
-          >
-            Create account
-          </button>
-        </form>
-      </div>
-    </div>
-  )
+    <AuthFormPage
+      fields={registerFields}
+      footerLinkLabel="Sign in"
+      footerLinkTo="/login"
+      footerText="Already have an account?"
+      submitColorClassName="bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500"
+      submitLabel="Create account"
+      subtitle="Set up your account to submit and monitor complaints."
+      title="Create your account"
+    />
+  );
 }
+
+export default Register;

@@ -1,37 +1,35 @@
-import React from 'react'
+import AuthFormPage from "../components/AuthFormPage";
 
-export default function Login() {
+const loginFields = [
+  {
+    name: "email",
+    label: "Email",
+    placeholder: "you@example.com",
+    type: "email",
+    autoComplete: "email",
+  },
+  {
+    name: "password",
+    label: "Password",
+    placeholder: "Enter your password",
+    type: "password",
+    autoComplete: "current-password",
+  },
+];
+
+function Login() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md p-8 bg-white rounded shadow">
-        <h1 className="text-2xl font-semibold mb-6">Sign in</h1>
-        <form>
-          <label className="block mb-3">
-            <span className="block text-sm font-medium text-gray-700">Email</span>
-            <input
-              type="email"
-              name="email"
-              className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
-            />
-          </label>
-
-          <label className="block mb-4">
-            <span className="block text-sm font-medium text-gray-700">Password</span>
-            <input
-              type="password"
-              name="password"
-              className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
-            />
-          </label>
-
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-          >
-            Sign in
-          </button>
-        </form>
-      </div>
-    </div>
-  )
+    <AuthFormPage
+      fields={loginFields}
+      footerLinkLabel="Register"
+      footerLinkTo="/register"
+      footerText="Need an account?"
+      submitColorClassName="bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500"
+      submitLabel="Sign in"
+      subtitle="Access your dashboard to track and manage complaints."
+      title="Welcome back"
+    />
+  );
 }
+
+export default Login;
