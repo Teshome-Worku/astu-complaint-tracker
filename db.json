@@ -52,7 +52,7 @@
       "description": "Internet in applied library is not working",
       "category": "IT",
       "userId": "5cf8",
-      "status": "pending",
+      "status": "in-progress",
       "createdAt": "2026-02-25T10:54:34.192Z"
     },
     {
@@ -61,7 +61,7 @@
       "description": "they are very late to release result",
       "category": "Academic",
       "userId": "5cf8",
-      "status": "pending",
+      "status": "in-progress",
       "createdAt": "2026-02-25T12:05:08.030Z"
     },
     {
@@ -70,7 +70,7 @@
       "description": "shower in our block 359 is not working ",
       "category": "Facility",
       "userId": "5cf8",
-      "status": "pending",
+      "status": "resolved",
       "createdAt": "2026-02-25T12:09:47.635Z"
     },
     {
@@ -79,7 +79,7 @@
       "description": "Cost sharing is not deposited yet for non-cafe students.",
       "category": "Finance",
       "userId": "f492",
-      "status": "pending",
+      "status": "in-progress",
       "createdAt": "2026-02-25T12:48:29.850Z"
     },
     {
@@ -88,7 +88,7 @@
       "description": "fetena kebed nw",
       "category": "Academic",
       "userId": "f492",
-      "status": "pending",
+      "status": "resolved",
       "createdAt": "2026-02-25T14:47:14.885Z",
       "attachment": {
         "fileName": "1767890258676-min.jpg",
