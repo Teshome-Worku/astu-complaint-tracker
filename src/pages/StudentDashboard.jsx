@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const navigationItems = [
@@ -26,9 +26,33 @@ const navigationItems = [
 ];
 
 const categoryOptions = ["General", "Academic", "Finance", "IT", "Facility", "Discipline"];
+const allowedImageTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+const allowedImageExtensions = [".jpg", ".jpeg", ".png", ".webp"];
+const serverPayloadLimitBytes = 100 * 1024;
+const maxImageSizeBytes = 70 * 1024;
+const maxDataUrlBytes = 90 * 1024;
+
+// image reader helper function
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("File read failed"));
+    reader.readAsDataURL(file);
+  });
+}
+
+// image size calculator
+function formatFileSize(size) {
+  if (size >= 1024 * 1024) {
+    return `${(size / (1024 * 1024)).toFixed(2)} MB`;
+  }
+  return `${Math.max(1, Math.round(size / 1024))} KB`;
+}
 
 function StudentDashboard() {
   const navigate = useNavigate();
+  const imageInputRef = useRef(null);
   const user = JSON.parse(localStorage.getItem("user"));
 
   const [activeSection, setActiveSection] = useState("submit");
@@ -42,12 +66,42 @@ function StudentDashboard() {
     description: "",
     category: "General",
   });
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imageError, setImageError] = useState("");
+  const [isReadingImage, setIsReadingImage] = useState(false);
 
+  // complaint history
+  const [complaints, setComplaints] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+
+//   mount when history section is active or user changes (e.g. after login
+  useEffect(() => {
+    const fetchComplaints = async () => {
+      if (!user?.id) return;
+      setLoading(true);
+      try {
+        const res = await axios.get(`http://localhost:5000/complaints?userId=${user.id}`);
+        setComplaints(res.data);
+      } catch (error) {
+        console.error("Failed to fetch complaints", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (activeSection === "history") {
+      fetchComplaints();
+    }
+  }, [activeSection, user?.id]);
+
+//   logout
   const handleLogout = () => {
     localStorage.removeItem("user");
     navigate("/login");
   };
-
+  
+//   image and complaint form handlers
   const handleComplaintChange = (event) => {
     const { name, value } = event.target;
     setComplaintData((prev) => ({
@@ -62,22 +116,90 @@ function StudentDashboard() {
       });
     }
   };
+  
+//   clear image function to reset image state and clear file input
+  const clearImage = () => {
+    setSelectedImage(null);
+    setImageError("");
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
+  };
 
+  const handleImageChange = async (event) => {
+    const file = event.target.files?.[0];
+    setImageError("");
+
+    if (!file) {
+      setSelectedImage(null);
+      return;
+    }
+    // image validation logic: type, extension, size
+    const normalizedType = file.type.toLowerCase();
+    const normalizedName = file.name.toLowerCase();
+    const isAllowedType = allowedImageTypes.includes(normalizedType);
+    const hasAllowedExtension = allowedImageExtensions.some((extension) =>
+      normalizedName.endsWith(extension)
+    );
+
+    if (!isAllowedType && !hasAllowedExtension) {
+      setSelectedImage(null);
+      setImageError("Only JPG, JPEG, PNG, or WEBP images are allowed.");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > maxImageSizeBytes) {
+      setSelectedImage(null);
+      setImageError("Image is too large for local server. Please use an image smaller than 70KB.");
+      event.target.value = "";
+      return;
+    }
+
+    setIsReadingImage(true);
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      const dataUrlBytes = new Blob([dataUrl]).size;
+      if (dataUrlBytes > maxDataUrlBytes) {
+        setSelectedImage(null);
+        setImageError("Image is too large after encoding. Use a smaller JPG/PNG image.");
+        event.target.value = "";
+        return;
+      }
+      setSelectedImage({
+        fileName: file.name,
+        mimeType: normalizedType || "image/jpeg",
+        size: file.size,
+        dataUrl,
+      });
+    } catch {
+      setSelectedImage(null);
+      setImageError("Failed to read image. Please choose another file.");
+      event.target.value = "";
+    } finally {
+      setIsReadingImage(false);
+    }
+  };
+  
+//   reset form function to clear all fields and feedback
   const resetForm = () => {
     setComplaintData({
       title: "",
       description: "",
       category: "General",
     });
+    clearImage();
     setSubmissionFeedback({
       type: "idle",
       message: "",
     });
   };
-
+   
+//   complaint submission handling
   const handleComplaintSubmit = async (event) => {
     event.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting || isReadingImage) return;
 
     if (!user?.id) {
       setSubmissionFeedback({
@@ -99,22 +221,40 @@ function StudentDashboard() {
         userId: user.id,
         status: "pending",
         createdAt: new Date().toISOString(),
+        attachment: selectedImage
+          ? {
+              fileName: selectedImage.fileName,
+              mimeType: selectedImage.mimeType,
+              size: selectedImage.size,
+              dataUrl: selectedImage.dataUrl,
+            }
+          : null,
       });
 
       setSubmissionFeedback({
         type: "success",
         message: "Complaint submitted successfully. You can track it in the status section.",
       });
+      setTimeout(()=>{
+        setSubmissionFeedback({
+          type: "idle",
+          message: "",
+        });
+      }, 5000)
 
       setComplaintData({
         title: "",
         description: "",
         category: "General",
       });
-    } catch {
+      clearImage();
+    } catch (error) {
+      const isPayloadTooLarge = error?.response?.status === 413;
       setSubmissionFeedback({
         type: "error",
-        message: "Failed to submit complaint. Please try again in a moment.",
+        message: isPayloadTooLarge
+          ? "Image payload is too large for the local server limit (100KB). Use a smaller image."
+          : "Failed to submit complaint. Please try again in a moment.",
       });
     } finally {
       setIsSubmitting(false);
@@ -143,9 +283,6 @@ function StudentDashboard() {
             <h2 className="text-2xl font-black tracking-tight text-indigo-400">Student Panel</h2>
             <p className="mt-1 text-sm text-slate-400">Manage your complaints from one place.</p>
           </div>
-
-          {/* <div className="flex justify-between flex-col"> */}
-
           <nav className="mt-8 space-y-2 " >
             {navigationItems.map((item) => {
               const isActive = activeSection === item.id;
@@ -153,7 +290,7 @@ function StudentDashboard() {
               return (
                 <button
                   key={item.id}
-                  className={`group w-full rounded-xl px-4 py-3 text-left transition ${
+                  className={`group w-full rounded-xl px-4 py-3 text-left transition hover:cursor-pointer ${
                     isActive
                       ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/40"
                       : "text-slate-300 hover:bg-slate-800/80 hover:text-white bg-slate-800/20"
@@ -172,19 +309,18 @@ function StudentDashboard() {
               );
             })}
           </nav>
-
+            {/* logout button*/}
           <button
-            className="mt-14 w-full rounded-xl bg-rose-600 px-4 py-2.5 font-semibold text-white transition hover:bg-rose-500"
+            className="mt-14 w-full rounded-xl bg-rose-600 px-4 py-2.5 font-semibold text-white transition hover:bg-rose-500 cursor-pointer"
             onClick={handleLogout}
           >
             Logout
           </button>
-          {/* </div> */}
         </div>
       </aside>
 
       <div className="flex-1 lg:h-screen lg:overflow-y-auto">
-        <header className="border-b border-slate-800 bg-slate-900/70 px-4 py-4 sm:px-6 lg:px-8">
+        <header className="border-b border-slate-800 bg-slate-900/85 px-4 py-4 backdrop-blur lg:sticky lg:top-0 lg:z-20 sm:px-6 lg:px-8">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h1 className="text-xl font-bold text-white">Welcome, {user?.name}</h1>
@@ -236,7 +372,7 @@ function StudentDashboard() {
                         </span>
                       </div>
                       <textarea
-                        className="min-h-44 w-full rounded-xl border border-slate-700 bg-slate-800/90 px-4 py-3 text-slate-100 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                        className="min-h-44 w-full rounded-xl border border-slate-700 bg-slate-800/90 px-4 py-3 text-slate-100 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 resize-none"
                         maxLength={600}
                         name="description"
                         onChange={handleComplaintChange}
@@ -263,6 +399,63 @@ function StudentDashboard() {
                       </select>
                     </label>
 
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-semibold text-slate-300">
+                        Evidence Image (optional)
+                      </span>
+                      <input
+                        ref={imageInputRef}
+                        accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                        className="w-full rounded-xl border border-slate-700 bg-slate-800/90 px-4 py-2.5 text-sm text-slate-200 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-indigo-600 file:px-3 file:py-1.5 file:font-semibold file:text-white hover:file:bg-indigo-500"
+                        onChange={handleImageChange}
+                        type="file"
+                      />
+                      <p className="mt-2 text-xs text-slate-500">
+                        Allowed: JPG, JPEG, PNG, WEBP. Max size: 70KB (local server limit: {serverPayloadLimitBytes / 1024}KB).
+                      </p>
+                    </label>
+
+                    {isReadingImage && (
+                      <div className="rounded-xl border border-sky-500/40 bg-sky-500/10 px-4 py-3 text-sm text-sky-200">
+                        Processing image...
+                      </div>
+                    )}
+
+                    {imageError && (
+                      <div className="rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                        {imageError}
+                      </div>
+                    )}
+
+
+                    {/* clear selected image */}
+                    {selectedImage && (
+                      <div className="rounded-2xl border border-slate-700 bg-slate-800/70 p-3">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                          <img
+                            alt="Attachment preview"
+                            className="h-28 w-full rounded-xl border border-slate-700 object-cover sm:w-40"
+                            src={selectedImage.dataUrl}
+                          />
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold text-slate-200">
+                              {selectedImage.fileName}
+                            </p>
+                            <p className="mt-1 text-xs text-slate-400">
+                              {selectedImage.mimeType} • {formatFileSize(selectedImage.size)}
+                            </p>
+                            <button
+                              className="mt-3 cursor-pointer rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-slate-700"
+                              onClick={clearImage}
+                              type="button"
+                            >
+                              Remove image
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {submissionFeedback.type !== "idle" && (
                       <div className={feedbackClassName}>{submissionFeedback.message}</div>
                     )}
@@ -270,18 +463,22 @@ function StudentDashboard() {
                     <div className="flex flex-wrap gap-3">
                       <button
                         className={`rounded-xl px-6 py-3 text-sm font-semibold text-white transition ${
-                          isSubmitting
+                          isSubmitting || isReadingImage
                             ? "cursor-not-allowed bg-indigo-500/60"
-                            : "bg-indigo-600 hover:-translate-y-0.5 hover:bg-indigo-500"
+                            : "bg-indigo-600 hover:-translate-y-0.5 hover:bg-indigo-500 cursor-pointer"
                         }`}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isReadingImage}
                         type="submit"
                       >
-                        {isSubmitting ? "Submitting..." : "Submit Complaint"}
+                        {isSubmitting
+                          ? "Submitting..."
+                          : isReadingImage
+                          ? "Processing image..."
+                          : "Submit Complaint"}
                       </button>
 
                       <button
-                        className="rounded-xl border border-slate-700 bg-slate-800 px-6 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-700"
+                        className="rounded-xl border border-slate-700 bg-slate-800 px-6 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-700 cursor-pointer"
                         onClick={resetForm}
                         type="button"
                       >
@@ -290,7 +487,7 @@ function StudentDashboard() {
                     </div>
                   </form>
                 </div>
-
+                {/* form submit guidance section */}
                 <aside className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-2xl shadow-black/30">
                   <h3 className="text-lg font-bold text-white">Before you submit</h3>
                   <p className="mt-2 text-sm text-slate-400">
@@ -317,17 +514,88 @@ function StudentDashboard() {
 
           {/* active section */}
 
-          {activeSection === "history" &&
-            renderPlaceholderSection(
-              "Complaint History",
-              "Your previous complaints and decisions will appear here in a timeline view."
+          {activeSection === "history" && (
+             <div>
+                {loading &&<p className="text-gray-400">Loading your complaints...</p>}
+                <h2 className="text-2xl font-bold mb-6">
+                Complaint History
+                </h2>
+
+                {complaints.length === 0 ? (
+                <p className="text-gray-400">
+                    You have not submitted any complaints yet.
+                </p>
+                ) : (
+                <div className="space-y-4">
+                    {complaints.map((complaint) => (
+                    <div
+                        key={complaint.id}
+                        className="bg-gray-900 border border-gray-800 p-5 rounded-xl">
+                        <div className="flex justify-between items-center mb-2">
+                            <h3 className="text-lg font-semibold">
+                                {complaint.title}
+                            </h3>
+
+                            <span
+                                className={`px-3 py-1 text-sm rounded-full ${
+                                complaint.status === "pending"
+                                    ? "bg-yellow-600"
+                                    : complaint.status === "in-progress"
+                                    ? "bg-blue-600"
+                                    : "bg-green-600"
+                                }`}>
+                                {complaint.status}
+                            </span>
+                        </div>
+
+                        <p className="text-gray-400 mb-3">
+                                 {complaint.description}
+                        </p>
+
+                        {(complaint.attachment?.dataUrl || complaint.attachment?.url) && (
+                          <div className="mb-3">
+                            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                              Attached Image
+                            </p>
+                            <a
+                              className="inline-block"
+                              href={complaint.attachment?.dataUrl || complaint.attachment?.url}
+                              rel="noreferrer"
+                              target="_blank"
+                              title="Open image in new tab"
+                            >
+                              <img
+                                alt={`Attachment for ${complaint.title}`}
+                                className="h-36 w-full max-w-sm rounded-xl border border-slate-700 object-cover transition hover:opacity-90"
+                                src={complaint.attachment?.dataUrl || complaint.attachment?.url}
+                              />
+                            </a>
+                            <p className="mt-2 text-xs text-slate-400">
+                              {complaint.attachment?.fileName || "image-attachment"}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="text-sm text-gray-500">
+                            Category: {complaint.category} | 
+                            Submitted: {new Date(complaint.createdAt).toLocaleString()}
+                        </div>
+                    </div>
+                    ))}
+                </div>
+                )}
+             </div>
             )}
+
+            {/* complaint track section */}
 
           {activeSection === "track" &&
             renderPlaceholderSection(
               "Track Complaint Status",
               "Live updates, assigned office, and resolution progress will appear in this section."
             )}
+
+            {/* chatbot section */}
 
           {activeSection === "chatbot" &&
             renderPlaceholderSection(
