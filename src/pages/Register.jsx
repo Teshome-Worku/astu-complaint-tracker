@@ -49,7 +49,7 @@ function Register() {
 
       // Redirect to login
       navigate("/login");
-    } catch (err) {
+    } catch {
       setError("Something went wrong");
     }
   };

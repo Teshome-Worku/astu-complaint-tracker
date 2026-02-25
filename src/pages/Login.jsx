@@ -28,12 +28,6 @@ function Login() {
         `http://localhost:5000/users?email=${formData.email}`
       );
 
-    //   if (res.data.length === 0) {
-    //     setError("Invalid email or password");
-    //     return;
-    //   }
-
-
       const user = res.data[0];
       if(!user || user.password !== formData.password) {
         setError("Invalid email or password");
@@ -51,7 +45,7 @@ function Login() {
       } else {
         navigate("/student-dashboard");
       }
-    } catch (err) {
+    } catch {
       setError("Something went wrong");
     }
   };

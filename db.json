@@ -1,50 +1,59 @@
 {
-    "users": [{
-            "id": "5c20",
-            "name": "Teshome Worku",
-            "email": "teshomeworku96@gmail.com",
-            "password": "123456",
-            "role": "student"
-        },
-        {
-            "id": "686e",
-            "name": "Teshe",
-            "email": "tesheworku1251@gmail.com",
-            "password": "@iPj95Nh6S8CM32",
-            "role": "student"
-        },
-
-
-        {
-            "id": "5cf8",
-            "name": "Teshe",
-            "email": "teshome.worku@astu.edu.et",
-            "password": "12345",
-            "role": "student"
-        },
-        {
-            "id": "f492",
-            "name": "Teshe",
-            "email": "teshome@astu.edu.et",
-            "password": "123456",
-            "role": "student"
-        },
-        {
-            "id": "staff1",
-            "name": "Staff User",
-            "email": "staff@astu.com",
-            "password": "1234",
-            "role": "staff"
-        },
-        {
-            "id": "admin1",
-            "name": "Admin User",
-            "email": "admin@astu.com",
-            "password": "1234",
-            "role": "admin"
-        }
-    ],
-    "staffs": [],
-    "admins": [],
-    "complaints": []
+  "users": [
+    {
+      "id": "5c20",
+      "name": "Teshome Worku",
+      "email": "teshomeworku96@gmail.com",
+      "password": "123456",
+      "role": "student"
+    },
+    {
+      "id": "686e",
+      "name": "Teshe",
+      "email": "tesheworku1251@gmail.com",
+      "password": "@iPj95Nh6S8CM32",
+      "role": "student"
+    },
+    {
+      "id": "5cf8",
+      "name": "Teshe",
+      "email": "teshome.worku@astu.edu.et",
+      "password": "12345",
+      "role": "student"
+    },
+    {
+      "id": "f492",
+      "name": "Teshe",
+      "email": "teshome@astu.edu.et",
+      "password": "123456",
+      "role": "student"
+    },
+    {
+      "id": "staff1",
+      "name": "Staff User",
+      "email": "staff@astu.com",
+      "password": "1234",
+      "role": "staff"
+    },
+    {
+      "id": "admin1",
+      "name": "Admin User",
+      "email": "admin@astu.com",
+      "password": "1234",
+      "role": "admin"
+    }
+  ],
+  "staffs": [],
+  "admins": [],
+  "complaints": [
+    {
+      "id": "838c",
+      "title": "Internet not working ",
+      "description": "Internet in applied library is not working",
+      "category": "IT",
+      "userId": "5cf8",
+      "status": "pending",
+      "createdAt": "2026-02-25T10:54:34.192Z"
+    }
+  ]
 }

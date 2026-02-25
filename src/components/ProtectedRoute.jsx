@@ -7,7 +7,7 @@ function ProtectedRoute({ children, allowedRole }) {
   let user = null;
   try {
     user = JSON.parse(raw);
-  } catch (e) {
+  } catch {
     // stored value malformed - force logout
     localStorage.removeItem("user");
     return <Navigate to="/login" replace />;
