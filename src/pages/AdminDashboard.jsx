@@ -198,79 +198,85 @@ function AdminSidebar({ activeItemId, isMobileOpen, onClose, onLogout, onSelectI
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-[256px] border-r border-blue-900/40 bg-gradient-to-b from-blue-950 via-blue-900 to-slate-900 text-slate-100 shadow-[6px_0_24px_rgba(2,6,23,0.32)] transition-transform duration-300 lg:static lg:z-auto lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-[256px] overflow-hidden border-r border-blue-900/40 bg-gradient-to-b from-blue-950 via-blue-900 to-slate-900 text-slate-100 shadow-[6px_0_24px_rgba(2,6,23,0.32)] transition-transform duration-300 lg:static lg:z-auto lg:translate-x-0 ${
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex h-full min-h-screen flex-col px-5 py-6">
-          <div className="mb-2 flex justify-end lg:hidden">
-            <button
-              aria-label="Close sidebar"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20"
-              onClick={onClose}
-              type="button"
-            >
-              <svg
-                aria-hidden="true"
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
+        <div className="flex h-full min-h-screen flex-col overflow-hidden">
+          <div className="px-5 pb-5 pt-4">
+            <div className="mb-2 flex justify-end lg:hidden">
+              <button
+                aria-label="Close sidebar"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20"
+                onClick={onClose}
+                type="button"
               >
-                <path d="M6 18 18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          </div>
-
-          <div className="border-b border-white/15 pb-5 text-center">
-            <img
-              alt="ASTU Complaint Tracker Logo"
-              className="mx-auto h-12 w-auto object-contain"
-              onError={() => setLogoIndex((prev) => prev + 1)}
-              src={logoSrc}
-            />
-            <div className="mt-3 space-y-0.5">
-              <p className="text-base font-medium text-white">ASTU Complaint Tracker</p>
-              <p className="text-xs text-blue-200/90">Admin Dashboard</p>
-            </div>
-          </div>
-
-          <nav className="mt-6 space-y-1.5">
-            {sidebarItems.map((item) => (
-              <SidebarItem
-                key={item.id}
-                item={item}
-                isActive={activeItemId === item.id}
-                onSelect={handleSelectItem}
-              />
-            ))}
-          </nav>
-
-          <div className="mt-auto border-t border-white/15 pt-4">
-            <button
-              className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-rose-200 transition hover:bg-rose-500/15 hover:text-rose-100"
-              onClick={onLogout}
-              type="button"
-            >
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-rose-500/20 text-rose-100 group-hover:bg-rose-500/30">
                 <svg
                   aria-hidden="true"
-                  className="h-4.5 w-4.5"
+                  className="h-4 w-4"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
                   viewBox="0 0 24 24"
                 >
-                  <path
-                    d="m16 17 5-5m0 0-5-5m5 5H9m4 5v1a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v1"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
+                  <path d="M6 18 18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-              </span>
-              <span>Logout</span>
-            </button>
+              </button>
+            </div>
+
+            <div className="border-b border-white/15 pb-5 text-center">
+              <img
+                alt="ASTU Complaint Tracker Logo"
+                className="mx-auto h-12 w-auto object-contain"
+                onError={() => setLogoIndex((prev) => prev + 1)}
+                src={logoSrc}
+              />
+              <div className="mt-3 space-y-0.5">
+                <p className="text-base font-medium text-white">ASTU Complaint Tracker</p>
+                <p className="text-xs text-blue-200/90">Admin Dashboard</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-6">
+            <div className="flex min-h-full flex-col">
+              <nav className="space-y-1.5">
+                {sidebarItems.map((item) => (
+                  <SidebarItem
+                    key={item.id}
+                    item={item}
+                    isActive={activeItemId === item.id}
+                    onSelect={handleSelectItem}
+                  />
+                ))}
+              </nav>
+
+              <div className="mt-auto border-t border-white/15 pt-4">
+                <button
+                  className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-rose-200 transition hover:bg-rose-500/15 hover:text-rose-100"
+                  onClick={onLogout}
+                  type="button"
+                >
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-rose-500/20 text-rose-100 group-hover:bg-rose-500/30">
+                    <svg
+                      aria-hidden="true"
+                      className="h-4.5 w-4.5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="m16 17 5-5m0 0-5-5m5 5H9m4 5v1a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v1"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                  <span>Logout</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </aside>
@@ -294,6 +300,19 @@ function AdminDashboard() {
   const [notifications, setNotifications] = useState([]);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    if (isSidebarOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = previousOverflow || "";
+    }
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isSidebarOpen]);
 
   const knownComplaintIdsRef = useRef(new Set());
   const isInitialFetchRef = useRef(true);
@@ -380,6 +399,32 @@ function AdminDashboard() {
     window.addEventListener("focus", handleFocus);
     return () => window.removeEventListener("focus", handleFocus);
   }, [fetchComplaints]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key !== "Escape") return;
+      if (isLogoutModalOpen) {
+        setIsLogoutModalOpen(false);
+        return;
+      }
+      setIsNotificationOpen(false);
+      setIsSidebarOpen(false);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isLogoutModalOpen]);
 
   useEffect(() => {
     const fetchStaffUsers = async () => {
@@ -868,8 +913,8 @@ function AdminDashboard() {
 
       <div className="flex-1 lg:h-screen lg:overflow-y-auto">
         <header className="sticky top-0 z-20 border-b border-slate-200 bg-slate-50/95 backdrop-blur">
-          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
-            <div className="flex w-full max-w-xl items-center gap-2">
+          <div className="flex items-center gap-2 px-4 py-4 sm:gap-3 sm:px-6 lg:px-8">
+            <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
               <button
                 aria-label="Open sidebar menu"
                 className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:bg-slate-100 lg:hidden"
@@ -892,7 +937,7 @@ function AdminDashboard() {
                 </svg>
               </button>
 
-              <div className="relative flex-1">
+              <div className="relative min-w-0 flex-1">
                 <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
                   <svg
                     aria-hidden="true"
@@ -918,7 +963,7 @@ function AdminDashboard() {
                 />
               </div>
             </div>
-            <div className="relative flex items-center gap-3">
+            <div className="relative flex shrink-0 items-center gap-2 sm:gap-3">
               <button
                 className="relative rounded-xl border border-slate-300 bg-white p-2.5 text-slate-700 shadow-sm transition hover:bg-slate-100"
                 onClick={() => setIsNotificationOpen((prev) => !prev)}
@@ -946,7 +991,7 @@ function AdminDashboard() {
               </button>
 
               {isNotificationOpen && (
-                <div className="absolute right-0 top-14 z-30 w-80 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+                <div className="absolute right-0 top-14 z-30 w-[min(20rem,calc(100vw-1rem))] rounded-xl border border-slate-200 bg-white p-3 shadow-xl sm:w-80">
                   <div className="mb-2 flex items-center justify-between">
                     <p className="text-sm font-semibold text-slate-800">New Complaints</p>
                     {unreadCount > 0 && (
@@ -980,7 +1025,7 @@ function AdminDashboard() {
                 </div>
               )}
 
-              <div className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm">
+              <div className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-2.5 py-2 text-sm font-semibold text-slate-700 shadow-sm sm:px-3">
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-700">
                   <svg
                     aria-hidden="true"
@@ -997,9 +1042,9 @@ function AdminDashboard() {
                     />
                   </svg>
                 </span>
-                <span>{user.name}</span>
-                <span className="text-slate-400">-</span>
-                <span>Admin</span>
+                <span className="hidden sm:inline">{user.name}</span>
+                <span className="hidden md:inline text-slate-400">-</span>
+                <span className="hidden md:inline">Admin</span>
               </div>
             </div>
           </div>
@@ -1394,6 +1439,37 @@ function AdminDashboard() {
           )}
         </main>
       </div>
+
+      {isLogoutModalOpen && (
+        <div
+          aria-modal="true"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/60 p-4"
+          role="dialog"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <h3 className="text-xl font-bold text-slate-800">Confirm Logout</h3>
+            <p className="mt-2 text-sm text-slate-600">
+              Are you sure you want to log out from the Admin Dashboard?
+            </p>
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                onClick={cancelLogout}
+                type="button"
+              >
+                Cancel
+              </button>
+              <button
+                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-500"
+                onClick={confirmLogout}
+                type="button"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
