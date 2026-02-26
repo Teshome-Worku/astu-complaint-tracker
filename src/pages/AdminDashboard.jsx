@@ -198,7 +198,7 @@ function AdminSidebar({ activeItemId, isMobileOpen, onClose, onLogout, onSelectI
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-[256px] overflow-hidden border-r border-blue-900/40 bg-gradient-to-b from-blue-950 via-blue-900 to-slate-900 text-slate-100 shadow-[6px_0_24px_rgba(2,6,23,0.32)] transition-transform duration-300 lg:static lg:z-auto lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-[256px] overflow-hidden border-r border-blue-900/40 bg-linear-to-b from-blue-950 via-blue-900 to-slate-900 text-slate-100 shadow-[6px_0_24px_rgba(2,6,23,0.32)] transition-transform duration-300 lg:static lg:z-auto lg:translate-x-0 ${
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -1126,7 +1126,7 @@ function AdminDashboard() {
                         <div className="absolute inset-0 m-auto h-16 w-16 rounded-full bg-white/95" />
                       </div>
 
-                      <div className="space-y-3 sm:min-w-[170px] sm:flex-1">
+                      <div className="space-y-3 sm:min-w-42.5 sm:flex-1">
                         {issueBreakdown.map((item) => (
                           <div
                             key={item.name}
@@ -1443,7 +1443,7 @@ function AdminDashboard() {
       {isLogoutModalOpen && (
         <div
           aria-modal="true"
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/60 p-4"
+          className="fixed inset-0 z-70 flex items-center justify-center bg-slate-950/60 p-4"
           role="dialog"
         >
           <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
