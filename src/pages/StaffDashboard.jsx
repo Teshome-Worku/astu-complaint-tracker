@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const statusBadgeClass = {
@@ -16,6 +16,7 @@ function StaffDashboard() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
   const staffDepartment = normalize(user?.department);
+  const staffId = String(user?.id ?? "");
 
   const [activeSection, setActiveSection] = useState("assigned");
   const [complaints, setComplaints] = useState([]);
@@ -31,40 +32,57 @@ function StaffDashboard() {
     [complaints]
   );
 
-  useEffect(() => {
-    const fetchComplaints = async () => {
+  const fetchComplaints = useCallback(async ({ showLoader = true } = {}) => {
+    if (showLoader) {
       setIsLoading(true);
-      setError("");
+    }
+    setError("");
 
-      try {
-        const res = await axios.get("http://localhost:5000/complaints");
-        const allComplaints = Array.isArray(res.data) ? res.data : [];
+    try {
+      const res = await axios.get("http://localhost:5000/complaints");
+      const allComplaints = Array.isArray(res.data) ? res.data : [];
 
-        // Backward-compatible filter:
-        // - preferred: complaint.department
-        // - fallback: complaint.category
-        // - if staff has no department configured, show all
-        const filteredComplaints = staffDepartment
-          ? allComplaints.filter((complaint) => {
-              const complaintDepartment = normalize(complaint.department);
-              const complaintCategory = normalize(complaint.category);
-              return (
-                complaintDepartment === staffDepartment || complaintCategory === staffDepartment
-              );
-            })
-          : allComplaints;
+      const filteredComplaints = allComplaints.filter((complaint) => {
+        const complaintAssignedStaffId = String(complaint.assignedStaffId ?? "");
+        const isDirectlyAssigned = complaintAssignedStaffId && complaintAssignedStaffId === staffId;
+        if (isDirectlyAssigned) return true;
 
-        setComplaints(filteredComplaints);
-      } catch (fetchError) {
-        console.error("Error fetching complaints", fetchError);
-        setError("Failed to load complaints. Please refresh.");
-      } finally {
+        // Keep backward compatibility for older records that have no assignedStaffId.
+        if (complaintAssignedStaffId) return false;
+        if (!staffDepartment) return false;
+
+        const assignedDepartment = normalize(complaint.assignedDepartment);
+        const complaintDepartment = normalize(complaint.department);
+        const complaintCategory = normalize(complaint.category);
+        return (
+          assignedDepartment === staffDepartment ||
+          complaintDepartment === staffDepartment ||
+          complaintCategory === staffDepartment
+        );
+      });
+
+      setComplaints(filteredComplaints);
+    } catch (fetchError) {
+      console.error("Error fetching complaints", fetchError);
+      setError("Failed to load complaints. Please refresh.");
+    } finally {
+      if (showLoader) {
         setIsLoading(false);
       }
-    };
+    }
+  }, [staffDepartment, staffId]);
 
+  useEffect(() => {
     fetchComplaints();
-  }, [staffDepartment]);
+  }, [fetchComplaints]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      fetchComplaints({ showLoader: false });
+    }, 10000);
+
+    return () => window.clearInterval(intervalId);
+  }, [fetchComplaints]);
 
   const updateStatus = async (id, newStatus) => {
     if (!id) return;
@@ -163,6 +181,17 @@ function StaffDashboard() {
               <span className="mx-2">|</span>
               <span>Submitted: {new Date(complaint.createdAt).toLocaleString()}</span>
             </div>
+
+            {(complaint.assignedDepartment || complaint.assignedStaffName || complaint.assignedStaffId) && (
+              <p className="mb-4 text-xs text-indigo-300">
+                Assigned by Admin: {complaint.assignedDepartment || "Unspecified Department"}
+                {complaint.assignedStaffName
+                  ? ` - ${complaint.assignedStaffName}`
+                  : complaint.assignedStaffId
+                    ? ` - Staff #${complaint.assignedStaffId}`
+                    : ""}
+              </p>
+            )}
 
             <div className="flex flex-wrap gap-2">
               <button
