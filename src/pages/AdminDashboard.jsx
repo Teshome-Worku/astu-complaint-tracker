@@ -4,10 +4,21 @@ import { useNavigate } from "react-router-dom";
 
 const departments = ["IT", "Maintenance", "Academic", "Finance", "Facility", "Discipline"];
 
-const navItems = [
-  { id: "overview", label: "Oversee all complaints" },
-  { id: "manage", label: "Manage users and categories" },
-  { id: "analytics", label: "View analytics dashboard" },
+const sidebarItems = [
+  { id: "dashboard", label: "Dashboard" },
+  { id: "complaints", label: "Complaints" },
+  { id: "users", label: "Users" },
+  { id: "categories", label: "Categories" },
+  { id: "reports", label: "Reports" },
+  { id: "settings", label: "Settings" },
+];
+
+const sidebarLogoCandidates = [
+  "/astu-complaint-tracker.png",
+  "/astu-complaint-logo.png",
+  "/astu-logo.png",
+  "/logo.png",
+  "/favicon.svg",
 ];
 
 const statusBadgeClass = {
@@ -36,11 +47,244 @@ function toTitleCase(value) {
     .join(" ");
 }
 
+function getSidebarIcon(id) {
+  if (id === "dashboard") {
+    return (
+      <svg
+        aria-hidden="true"
+        className="h-4.5 w-4.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+      >
+        <path d="M3 13h8V3H3v10Zm0 8h8v-6H3v6Zm10 0h8V11h-8v10Zm0-18v6h8V3h-8Z" />
+      </svg>
+    );
+  }
+
+  if (id === "complaints") {
+    return (
+      <svg
+        aria-hidden="true"
+        className="h-4.5 w-4.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+      >
+        <path
+          d="M8 7h12M8 12h12M8 17h12M3 7h.01M3 12h.01M3 17h.01"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
+  if (id === "users") {
+    return (
+      <svg
+        aria-hidden="true"
+        className="h-4.5 w-4.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+      >
+        <path
+          d="M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Zm6 13a7 7 0 0 0-14 0M18 20a5 5 0 0 0-5-5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
+  if (id === "categories") {
+    return (
+      <svg
+        aria-hidden="true"
+        className="h-4.5 w-4.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+      >
+        <path
+          d="M8 7h12M8 12h12M8 17h12M3 7h.01M3 12h.01M3 17h.01"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
+  if (id === "reports") {
+    return (
+      <svg
+        aria-hidden="true"
+        className="h-4.5 w-4.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+      >
+        <path d="M4 19h16M7 15V9M12 15V5M17 15v-3" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-4.5 w-4.5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <path
+        d="M12 15.75a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 1-2 0 1.65 1.65 0 0 0-1-.6 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 1 0-2 1.65 1.65 0 0 0 .6-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 1 2 0 1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.24.3.4.65.46 1.03.06.37-.02.75-.2 1.08-.18.33-.47.6-.82.78-.36.18-.74.26-1.14.24"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function SidebarItem({ item, isActive, onSelect }) {
+  return (
+    <button
+      className={`group flex w-full items-center gap-3 rounded-xl border-l-4 px-3 py-2.5 text-left text-sm transition ${
+        isActive
+          ? "border-cyan-300 bg-cyan-400/20 text-white font-medium"
+          : "border-transparent text-blue-100/90 hover:bg-white/10 hover:text-white"
+      }`}
+      onClick={() => onSelect(item)}
+      type="button"
+    >
+      <span
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-lg ${
+          isActive
+            ? "bg-cyan-300/25 text-cyan-100"
+            : "bg-white/10 text-blue-200 group-hover:bg-white/15 group-hover:text-white"
+        }`}
+      >
+        {getSidebarIcon(item.id)}
+      </span>
+      <span>{item.label}</span>
+    </button>
+  );
+}
+
+function AdminSidebar({ activeItemId, isMobileOpen, onClose, onLogout, onSelectItem }) {
+  const [logoIndex, setLogoIndex] = useState(0);
+  const logoSrc = sidebarLogoCandidates[Math.min(logoIndex, sidebarLogoCandidates.length - 1)];
+  const handleSelectItem = (item) => {
+    onSelectItem(item);
+    onClose();
+  };
+
+  return (
+    <>
+      {isMobileOpen && (
+        <button
+          aria-label="Close sidebar overlay"
+          className="fixed inset-0 z-40 bg-slate-950/55 lg:hidden"
+          onClick={onClose}
+          type="button"
+        />
+      )}
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-[256px] border-r border-blue-900/40 bg-gradient-to-b from-blue-950 via-blue-900 to-slate-900 text-slate-100 shadow-[6px_0_24px_rgba(2,6,23,0.32)] transition-transform duration-300 lg:static lg:z-auto lg:translate-x-0 ${
+          isMobileOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex h-full min-h-screen flex-col px-5 py-6">
+          <div className="mb-2 flex justify-end lg:hidden">
+            <button
+              aria-label="Close sidebar"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20"
+              onClick={onClose}
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path d="M6 18 18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="border-b border-white/15 pb-5 text-center">
+            <img
+              alt="ASTU Complaint Tracker Logo"
+              className="mx-auto h-12 w-auto object-contain"
+              onError={() => setLogoIndex((prev) => prev + 1)}
+              src={logoSrc}
+            />
+            <div className="mt-3 space-y-0.5">
+              <p className="text-base font-medium text-white">ASTU Complaint Tracker</p>
+              <p className="text-xs text-blue-200/90">Admin Dashboard</p>
+            </div>
+          </div>
+
+          <nav className="mt-6 space-y-1.5">
+            {sidebarItems.map((item) => (
+              <SidebarItem
+                key={item.id}
+                item={item}
+                isActive={activeItemId === item.id}
+                onSelect={handleSelectItem}
+              />
+            ))}
+          </nav>
+
+          <div className="mt-auto border-t border-white/15 pt-4">
+            <button
+              className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-rose-200 transition hover:bg-rose-500/15 hover:text-rose-100"
+              onClick={onLogout}
+              type="button"
+            >
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-rose-500/20 text-rose-100 group-hover:bg-rose-500/30">
+                <svg
+                  aria-hidden="true"
+                  className="h-4.5 w-4.5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="m16 17 5-5m0 0-5-5m5 5H9m4 5v1a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v1"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}
+
 function AdminDashboard() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
 
-  const [activeSection, setActiveSection] = useState("overview");
+  const [activeSidebarItem, setActiveSidebarItem] = useState("dashboard");
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [complaints, setComplaints] = useState([]);
   const [staffUsers, setStaffUsers] = useState([]);
   const [assignmentDrafts, setAssignmentDrafts] = useState({});
@@ -164,6 +408,10 @@ function AdminDashboard() {
       return nextDrafts;
     });
   }, [complaints]);
+
+  const handleSidebarSelection = (item) => {
+    setActiveSidebarItem(item.id);
+  };
 
   const updateAssignmentDraft = (id, key, value) => {
     setAssignmentDrafts((prevDrafts) => ({
@@ -329,9 +577,107 @@ function AdminDashboard() {
     return { background: `conic-gradient(${segments.join(", ")})` };
   }, [issueBreakdown]);
 
+  const pieSliceLabels = useMemo(() => {
+    let runningPercent = 0;
+    return issueBreakdown
+      .filter((item) => item.percent > 0)
+      .map((item) => {
+        const start = runningPercent;
+        const end = runningPercent + item.percent;
+        const midpoint = (start + end) / 2;
+        runningPercent = end;
+
+        const angleInRadians = ((midpoint / 100) * 360 - 90) * (Math.PI / 180);
+        const radius = 33;
+        const x = 50 + radius * Math.cos(angleInRadians);
+        const y = 50 + radius * Math.sin(angleInRadians);
+
+        return {
+          name: item.name,
+          percent: item.percent,
+          x,
+          y,
+        };
+      });
+  }, [issueBreakdown]);
+
   const unreadCount = notifications.length;
 
+  const userSummary = useMemo(() => {
+    const totalUsers = staffUsers.length;
+    const staffWithDepartment = staffUsers.filter((staff) => normalize(staff.department)).length;
+    const uniqueDepartments = new Set(
+      staffUsers.map((staff) => normalize(staff.department)).filter(Boolean)
+    );
+
+    return {
+      totalUsers,
+      staffWithDepartment,
+      departmentCoverage: uniqueDepartments.size,
+      unassignedStaff: totalUsers - staffWithDepartment,
+    };
+  }, [staffUsers]);
+
+  const categoryInsights = useMemo(() => {
+    const categoryMap = complaints.reduce((acc, complaint) => {
+      const name = toTitleCase(normalize(complaint.category) || "Uncategorized");
+      if (!acc[name]) {
+        acc[name] = { name, total: 0, resolved: 0, pending: 0, inProgress: 0, assigned: 0 };
+      }
+      acc[name].total += 1;
+      if (complaint.status === "resolved") acc[name].resolved += 1;
+      if (complaint.status === "pending" || complaint.status === "new") acc[name].pending += 1;
+      if (complaint.status === "in-progress") acc[name].inProgress += 1;
+      if (complaint.status === "assigned") acc[name].assigned += 1;
+      return acc;
+    }, {});
+
+    return Object.values(categoryMap)
+      .map((entry) => ({
+        ...entry,
+        resolutionRate: entry.total ? Math.round((entry.resolved / entry.total) * 100) : 0,
+      }))
+      .sort((a, b) => b.total - a.total);
+  }, [complaints]);
+
+  const reportRows = useMemo(() => {
+    const rows = complaints.reduce((acc, complaint) => {
+      const date = new Date(complaint.createdAt || Date.now());
+      const key = `${date.getFullYear()}-${date.getMonth()}`;
+      if (!acc[key]) {
+        acc[key] = {
+          key,
+          label: date.toLocaleString(undefined, { month: "short", year: "numeric" }),
+          submitted: 0,
+          resolved: 0,
+        };
+      }
+      acc[key].submitted += 1;
+      if (complaint.status === "resolved") {
+        acc[key].resolved += 1;
+      }
+      return acc;
+    }, {});
+
+    return Object.values(rows)
+      .sort((a, b) => (a.key < b.key ? 1 : -1))
+      .slice(0, 8)
+      .map((row) => ({
+        ...row,
+        resolutionRate: row.submitted ? Math.round((row.resolved / row.submitted) * 100) : 0,
+      }));
+  }, [complaints]);
+
   const handleLogout = () => {
+    setIsLogoutModalOpen(true);
+  };
+
+  const cancelLogout = () => {
+    setIsLogoutModalOpen(false);
+  };
+
+  const confirmLogout = () => {
+    setIsLogoutModalOpen(false);
     localStorage.removeItem("user");
     navigate("/login");
   };
@@ -417,7 +763,7 @@ function AdminDashboard() {
 
               {canAssign && (
                 <div className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <label className="min-w-[180px] flex-1">
+                  <label className="min-w-45 flex-1">
                     <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
                       Department
                     </span>
@@ -445,7 +791,7 @@ function AdminDashboard() {
                     </select>
                   </label>
 
-                  <label className="min-w-[190px] flex-1">
+                  <label className="min-w-47.5 flex-1">
                     <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
                       Assign Staff
                     </span>
@@ -512,61 +858,65 @@ function AdminDashboard() {
 
   return (
     <div className="flex min-h-screen bg-slate-100 text-slate-900">
-      <aside className="w-full bg-gradient-to-b from-blue-700 to-blue-900 text-blue-50 lg:w-[260px] lg:min-h-screen">
-        <div className="flex h-full flex-col p-6">
-          <div className="border-b border-white/20 pb-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/20 text-lg font-black">
-                A
-              </div>
-              <div>
-                <p className="text-2xl font-black leading-tight">ASTU Portal</p>
-                <p className="text-xs text-blue-100/90">Admin Control Center</p>
-              </div>
-            </div>
-          </div>
-
-          <nav className="mt-6 space-y-2">
-            {navItems.map((item) => {
-              const isActive = activeSection === item.id;
-              return (
-                <button
-                  key={item.id}
-                  className={`w-full rounded-xl px-4 py-3 text-left text-sm font-semibold transition ${
-                    isActive
-                      ? "bg-white/20 text-white shadow-lg shadow-blue-950/40"
-                      : "text-blue-100 hover:bg-white/15 hover:text-white"
-                  }`}
-                  onClick={() => setActiveSection(item.id)}
-                  type="button"
-                >
-                  {item.label}
-                </button>
-              );
-            })}
-          </nav>
-
-          <button
-            className="mt-auto rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-400"
-            onClick={handleLogout}
-            type="button"
-          >
-            Logout
-          </button>
-        </div>
-      </aside>
+      <AdminSidebar
+        activeItemId={activeSidebarItem}
+        isMobileOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        onLogout={handleLogout}
+        onSelectItem={handleSidebarSelection}
+      />
 
       <div className="flex-1 lg:h-screen lg:overflow-y-auto">
         <header className="sticky top-0 z-20 border-b border-slate-200 bg-slate-50/95 backdrop-blur">
           <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
-            <div className="w-full max-w-xl">
-              <input
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none transition focus:border-blue-500"
-                placeholder="Search complaints, categories, departments..."
-                onChange={(event) => setSearchTerm(event.target.value)}
-                value={searchTerm}
-                type="text"
-              />
+            <div className="flex w-full max-w-xl items-center gap-2">
+              <button
+                aria-label="Open sidebar menu"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:bg-slate-100 lg:hidden"
+                onClick={() => setIsSidebarOpen(true)}
+                type="button"
+              >
+                <svg
+                  aria-hidden="true"
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M4 7h16M4 12h16M4 17h16"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+
+              <div className="relative flex-1">
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                  <svg
+                    aria-hidden="true"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="m21 21-4.35-4.35M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+                <input
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 pl-10 text-sm text-slate-700 outline-none transition focus:border-blue-500"
+                  placeholder="Search complaints, categories, departments..."
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  value={searchTerm}
+                  type="text"
+                />
+              </div>
             </div>
             <div className="relative flex items-center gap-3">
               <button
@@ -662,7 +1012,7 @@ function AdminDashboard() {
             </div>
           )}
 
-          {activeSection === "overview" && (
+          {activeSidebarItem === "dashboard" && (
             <>
               <section className="grid gap-4 lg:grid-cols-3">
                 <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -710,30 +1060,38 @@ function AdminDashboard() {
                   {issueBreakdown.length === 0 ? (
                     <p className="mt-4 text-sm text-slate-500">No category data available yet.</p>
                   ) : (
-                    <div className="mt-4 flex flex-wrap items-center gap-5">
+                    <div className="mt-4 flex flex-col gap-6 sm:flex-row sm:flex-nowrap sm:items-center">
                       <div
                         className="relative h-52 w-52 rounded-full border-8 border-white shadow-sm"
                         style={pieChartStyle}
                       >
+                        {pieSliceLabels.map((sliceLabel) => (
+                          <span
+                            key={sliceLabel.name}
+                            className="absolute text-lg font-black text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]"
+                            style={{
+                              left: `${sliceLabel.x}%`,
+                              top: `${sliceLabel.y}%`,
+                              transform: "translate(-50%, -50%)",
+                            }}
+                          >
+                            {sliceLabel.percent}%
+                          </span>
+                        ))}
                         <div className="absolute inset-0 m-auto h-16 w-16 rounded-full bg-white/95" />
                       </div>
 
-                      <div className="min-w-[180px] flex-1 space-y-2">
+                      <div className="space-y-3 sm:min-w-[170px] sm:flex-1">
                         {issueBreakdown.map((item) => (
                           <div
                             key={item.name}
-                            className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2"
+                            className="flex items-center gap-2 text-slate-700"
                           >
-                            <div className="flex items-center gap-2">
-                              <span
-                                className="inline-block h-3 w-3 rounded-full"
-                                style={{ backgroundColor: item.pieColor }}
-                              />
-                              <span className="text-sm font-medium text-slate-700">{item.name}</span>
-                            </div>
-                            <span className="text-xs font-semibold text-slate-500">
-                              {item.percent}% ({item.count})
-                            </span>
+                            <span
+                              className="inline-block h-3 w-3 rounded-full"
+                              style={{ backgroundColor: item.pieColor }}
+                            />
+                            <span className="text-sm font-medium">{item.name}</span>
                           </div>
                         ))}
                       </div>
@@ -747,7 +1105,7 @@ function AdminDashboard() {
                   <h2 className="text-2xl font-black text-slate-800">Recent Complaints</h2>
                   <button
                     className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-500"
-                    onClick={() => setActiveSection("manage")}
+                    onClick={() => setActiveSidebarItem("complaints")}
                     type="button"
                   >
                     View All
@@ -805,75 +1163,231 @@ function AdminDashboard() {
             </>
           )}
 
-          {activeSection === "manage" && (
+          {activeSidebarItem === "complaints" && (
             <section className="space-y-4">
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 className="text-2xl font-black text-slate-800">Manage Users and Categories</h2>
+                <h2 className="text-2xl font-black text-slate-800">Complaint Management</h2>
                 <p className="mt-2 text-sm text-slate-600">
-                  Assign department and staff for complaints and supervise ticket routing.
+                  Assign complaints to departments/staff and supervise ticket routing.
                 </p>
               </div>
               {renderManagementList()}
             </section>
           )}
 
-          {activeSection === "analytics" && (
+          {activeSidebarItem === "users" && (
             <section className="space-y-4">
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 className="text-2xl font-black text-slate-800">Analytics Dashboard</h2>
+                <h2 className="text-2xl font-black text-slate-800">User Management</h2>
                 <p className="mt-2 text-sm text-slate-600">
-                  Review issue distribution and response performance.
+                  Monitor staff accounts and department mapping for complaint operations.
+                </p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Staff</p>
+                  <p className="mt-2 text-3xl font-black text-slate-800">{userSummary.totalUsers}</p>
+                </article>
+                <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">With Department</p>
+                  <p className="mt-2 text-3xl font-black text-blue-700">
+                    {userSummary.staffWithDepartment}
+                  </p>
+                </article>
+                <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Departments Covered</p>
+                  <p className="mt-2 text-3xl font-black text-emerald-700">
+                    {userSummary.departmentCoverage}
+                  </p>
+                </article>
+                <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Without Department</p>
+                  <p className="mt-2 text-3xl font-black text-amber-600">
+                    {userSummary.unassignedStaff}
+                  </p>
+                </article>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <h3 className="text-lg font-bold text-slate-800">Staff Directory</h3>
+                {staffUsers.length === 0 ? (
+                  <p className="mt-3 text-sm text-slate-500">No staff users found.</p>
+                ) : (
+                  <div className="mt-4 overflow-x-auto">
+                    <table className="min-w-full text-left text-sm">
+                      <thead className="text-slate-500">
+                        <tr>
+                          <th className="pb-2 pr-4 font-semibold">ID</th>
+                          <th className="pb-2 pr-4 font-semibold">Name</th>
+                          <th className="pb-2 pr-4 font-semibold">Email</th>
+                          <th className="pb-2 font-semibold">Department</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-slate-700">
+                        {staffUsers.map((staff) => (
+                          <tr key={staff.id} className="border-t border-slate-200">
+                            <td className="py-2 pr-4 font-medium">{staff.id}</td>
+                            <td className="py-2 pr-4">{staff.name}</td>
+                            <td className="py-2 pr-4">{staff.email}</td>
+                            <td className="py-2">{staff.department || "Not set"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {activeSidebarItem === "categories" && (
+            <section className="space-y-4">
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <h2 className="text-2xl font-black text-slate-800">Category Insights</h2>
+                <p className="mt-2 text-sm text-slate-600">
+                  Track complaint volume and resolution performance by category.
+                </p>
+              </div>
+
+              {categoryInsights.length === 0 ? (
+                <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <p className="text-slate-600">No category data available.</p>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-left text-sm">
+                      <thead className="text-slate-500">
+                        <tr>
+                          <th className="pb-2 pr-4 font-semibold">Category</th>
+                          <th className="pb-2 pr-4 font-semibold">Total</th>
+                          <th className="pb-2 pr-4 font-semibold">Pending</th>
+                          <th className="pb-2 pr-4 font-semibold">Assigned</th>
+                          <th className="pb-2 pr-4 font-semibold">In Progress</th>
+                          <th className="pb-2 pr-4 font-semibold">Resolved</th>
+                          <th className="pb-2 font-semibold">Resolution Rate</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-slate-700">
+                        {categoryInsights.map((categoryRow) => (
+                          <tr key={categoryRow.name} className="border-t border-slate-200">
+                            <td className="py-2 pr-4 font-medium">{categoryRow.name}</td>
+                            <td className="py-2 pr-4">{categoryRow.total}</td>
+                            <td className="py-2 pr-4">{categoryRow.pending}</td>
+                            <td className="py-2 pr-4">{categoryRow.assigned}</td>
+                            <td className="py-2 pr-4">{categoryRow.inProgress}</td>
+                            <td className="py-2 pr-4">{categoryRow.resolved}</td>
+                            <td className="py-2">{categoryRow.resolutionRate}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+
+          {activeSidebarItem === "reports" && (
+            <section className="space-y-4">
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <h2 className="text-2xl font-black text-slate-800">Reports</h2>
+                <p className="mt-2 text-sm text-slate-600">
+                  Monthly operational report based on submitted and resolved complaints.
+                </p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Complaints</p>
+                  <p className="mt-2 text-3xl font-black text-slate-800">{metrics.total}</p>
+                </article>
+                <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Resolution Rate</p>
+                  <p className="mt-2 text-3xl font-black text-blue-700">{metrics.resolutionRate}%</p>
+                </article>
+                <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Open Tickets</p>
+                  <p className="mt-2 text-3xl font-black text-amber-600">
+                    {metrics.pending + metrics.assigned + metrics.inProgress}
+                  </p>
+                </article>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <h3 className="text-lg font-bold text-slate-800">Monthly Performance</h3>
+                {reportRows.length === 0 ? (
+                  <p className="mt-3 text-sm text-slate-500">No reporting data available yet.</p>
+                ) : (
+                  <div className="mt-4 overflow-x-auto">
+                    <table className="min-w-full text-left text-sm">
+                      <thead className="text-slate-500">
+                        <tr>
+                          <th className="pb-2 pr-4 font-semibold">Month</th>
+                          <th className="pb-2 pr-4 font-semibold">Submitted</th>
+                          <th className="pb-2 pr-4 font-semibold">Resolved</th>
+                          <th className="pb-2 font-semibold">Resolution Rate</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-slate-700">
+                        {reportRows.map((row) => (
+                          <tr key={row.key} className="border-t border-slate-200">
+                            <td className="py-2 pr-4 font-medium">{row.label}</td>
+                            <td className="py-2 pr-4">{row.submitted}</td>
+                            <td className="py-2 pr-4">{row.resolved}</td>
+                            <td className="py-2">{row.resolutionRate}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {activeSidebarItem === "settings" && (
+            <section className="space-y-4">
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <h2 className="text-2xl font-black text-slate-800">Settings</h2>
+                <p className="mt-2 text-sm text-slate-600">
+                  System configuration snapshot for admin operations.
                 </p>
               </div>
 
               <div className="grid gap-4 lg:grid-cols-2">
                 <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                  <h3 className="text-lg font-bold text-slate-800">Complaint Volume by Status</h3>
-                  <div className="mt-6 flex h-64 items-end justify-between gap-3">
-                    {statusBarData.map((statusItem) => (
-                      <div key={statusItem.label} className="flex flex-1 flex-col items-center gap-2">
-                        <div className="relative flex h-48 w-full items-end rounded-xl bg-slate-100 px-2 py-2">
-                          <div
-                            className={`w-full rounded-lg ${statusItem.colorClass}`}
-                            style={{ height: `${statusItem.heightPercent}%` }}
-                            title={`${statusItem.label}: ${statusItem.value}`}
-                          />
-                        </div>
-                        <p className="text-xs font-semibold text-slate-500">{statusItem.label}</p>
-                        <p className="text-sm font-black text-slate-800">{statusItem.value}</p>
-                      </div>
-                    ))}
+                  <h3 className="text-lg font-bold text-slate-800">Notification Settings</h3>
+                  <div className="mt-4 space-y-3 text-sm text-slate-700">
+                    <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
+                      <span>Live complaint polling</span>
+                      <span className="font-semibold text-emerald-700">Enabled (5s)</span>
+                    </div>
+                    <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
+                      <span>Unread notifications</span>
+                      <span className="font-semibold text-blue-700">{unreadCount}</span>
+                    </div>
+                    <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
+                      <span>Window focus refresh</span>
+                      <span className="font-semibold text-emerald-700">Enabled</span>
+                    </div>
                   </div>
                 </article>
 
                 <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                  <h3 className="text-lg font-bold text-slate-800">Issue Breakdown (Pie Chart)</h3>
-                  {issueBreakdown.length === 0 ? (
-                    <p className="mt-4 text-sm text-slate-500">No category data available yet.</p>
-                  ) : (
-                    <div className="mt-4 flex flex-wrap items-center gap-5">
-                      <div className="relative h-52 w-52 rounded-full border-8 border-white shadow-sm" style={pieChartStyle}>
-                        <div className="absolute inset-0 m-auto h-16 w-16 rounded-full bg-white/95" />
-                      </div>
-
-                      <div className="min-w-[180px] flex-1 space-y-2">
-                        {issueBreakdown.map((item) => (
-                          <div key={item.name} className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
-                            <div className="flex items-center gap-2">
-                              <span
-                                className="inline-block h-3 w-3 rounded-full"
-                                style={{ backgroundColor: item.pieColor }}
-                              />
-                              <span className="text-sm font-medium text-slate-700">{item.name}</span>
-                            </div>
-                            <span className="text-xs font-semibold text-slate-500">
-                              {item.percent}% ({item.count})
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                  <h3 className="text-lg font-bold text-slate-800">Assignment Rules</h3>
+                  <div className="mt-4 space-y-3 text-sm text-slate-700">
+                    <div className="rounded-lg bg-slate-50 px-3 py-2">
+                      Ticket assignment is allowed only for <span className="font-semibold">pending/new</span> complaints.
                     </div>
-                  )}
+                    <div className="rounded-lg bg-slate-50 px-3 py-2">
+                      Assignment requires both <span className="font-semibold">department</span> and <span className="font-semibold">staff</span>.
+                    </div>
+                    <div className="rounded-lg bg-slate-50 px-3 py-2">
+                      Staff receives tickets by <span className="font-semibold">assignedStaffId</span>.
+                    </div>
+                  </div>
                 </article>
               </div>
             </section>
@@ -885,4 +1399,3 @@ function AdminDashboard() {
 }
 
 export default AdminDashboard;
-
