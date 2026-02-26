@@ -220,6 +220,8 @@ function StudentDashboard() {
         ...complaintData,
         userId: user.id,
         status: "pending",
+        assignedDepartment: null,
+        assignedStaffId: null,
         createdAt: new Date().toISOString(),
         attachment: selectedImage
           ? {
