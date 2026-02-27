@@ -21,6 +21,8 @@ const sidebarLogoCandidates = [
   "/favicon.svg",
 ];
 
+const adminLastSeenComplaintStorageKey = "admin_last_seen_complaint_ms";
+
 const statusBadgeClass = {
   pending: "bg-amber-100 text-amber-700 border border-amber-300",
   assigned: "bg-indigo-100 text-indigo-700 border border-indigo-300",
@@ -295,6 +297,7 @@ function AdminDashboard() {
   const [staffUsers, setStaffUsers] = useState([]);
   const [assignmentDrafts, setAssignmentDrafts] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
+  const [notificationTargetComplaintId, setNotificationTargetComplaintId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState("");
   const [notifications, setNotifications] = useState([]);
@@ -316,7 +319,9 @@ function AdminDashboard() {
 
   const knownComplaintIdsRef = useRef(new Set());
   const isInitialFetchRef = useRef(true);
-  const latestSeenCreatedAtRef = useRef(0);
+  const persistedLastSeenComplaintMsRef = useRef(
+    Number(localStorage.getItem(adminLastSeenComplaintStorageKey) || 0)
+  );
 
   const fetchComplaints = useCallback(async ({ showLoader = true } = {}) => {
     if (showLoader) {
@@ -333,15 +338,22 @@ function AdminDashboard() {
         const complaintTimestamp = new Date(complaint.createdAt || 0).getTime() || 0;
         return complaintTimestamp > latest ? complaintTimestamp : latest;
       }, 0);
+      const shouldBootstrapLastSeen =
+        isInitialFetchRef.current && persistedLastSeenComplaintMsRef.current === 0;
 
-      if (!isInitialFetchRef.current) {
+      if (shouldBootstrapLastSeen) {
+        if (latestCreatedAtMs > 0) {
+          persistedLastSeenComplaintMsRef.current = latestCreatedAtMs;
+          localStorage.setItem(adminLastSeenComplaintStorageKey, String(latestCreatedAtMs));
+        }
+      } else {
         const incomingNotifications = fetchedComplaints
           .filter((complaint) => {
             const complaintId = String(complaint.id);
             const complaintTimestamp = new Date(complaint.createdAt || 0).getTime() || 0;
             return (
-              !knownComplaintIdsRef.current.has(complaintId) ||
-              complaintTimestamp > latestSeenCreatedAtRef.current
+              complaintTimestamp > persistedLastSeenComplaintMsRef.current ||
+              (!isInitialFetchRef.current && !knownComplaintIdsRef.current.has(complaintId))
             );
           })
           .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
@@ -349,6 +361,8 @@ function AdminDashboard() {
             id: `${complaint.id}-${Date.now()}`,
             complaintId: complaint.id,
             title: complaint.title || "New complaint",
+            category: complaint.category || "N/A",
+            status: complaint.status || "pending",
             createdAt: complaint.createdAt,
           }));
 
@@ -367,7 +381,6 @@ function AdminDashboard() {
 
       isInitialFetchRef.current = false;
       knownComplaintIdsRef.current = incomingComplaintIds;
-      latestSeenCreatedAtRef.current = Math.max(latestSeenCreatedAtRef.current, latestCreatedAtMs);
       setComplaints(fetchedComplaints);
     } catch {
       console.error("Failed to fetch complaints");
@@ -456,6 +469,22 @@ function AdminDashboard() {
 
   const handleSidebarSelection = (item) => {
     setActiveSidebarItem(item.id);
+  };
+
+  const openComplaintFromNotification = (notificationItem) => {
+    const complaintId = String(notificationItem?.complaintId ?? "");
+    const complaintTimestamp = new Date(notificationItem?.createdAt || 0).getTime() || 0;
+    if (complaintTimestamp > persistedLastSeenComplaintMsRef.current) {
+      persistedLastSeenComplaintMsRef.current = complaintTimestamp;
+      localStorage.setItem(adminLastSeenComplaintStorageKey, String(complaintTimestamp));
+    }
+    setNotifications((prevNotifications) =>
+      prevNotifications.filter((entry) => String(entry.complaintId) !== complaintId)
+    );
+    setSearchTerm("");
+    setIsNotificationOpen(false);
+    setActiveSidebarItem("complaints");
+    setNotificationTargetComplaintId(complaintId);
   };
 
   const updateAssignmentDraft = (id, key, value) => {
@@ -586,6 +615,27 @@ function AdminDashboard() {
     () => filteredSortedComplaints.slice(0, 6),
     [filteredSortedComplaints]
   );
+
+  useEffect(() => {
+    if (activeSidebarItem !== "complaints" || !notificationTargetComplaintId) {
+      return;
+    }
+
+    const complaintCard = document.getElementById(`complaint-card-${notificationTargetComplaintId}`);
+    if (!complaintCard) {
+      return;
+    }
+
+    complaintCard.scrollIntoView({ behavior: "smooth", block: "center" });
+    complaintCard.classList.add("ring-2", "ring-blue-300");
+
+    const timeoutId = window.setTimeout(() => {
+      complaintCard.classList.remove("ring-2", "ring-blue-300");
+      setNotificationTargetComplaintId("");
+    }, 1500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [activeSidebarItem, notificationTargetComplaintId, filteredSortedComplaints]);
 
   const statusBarData = useMemo(() => {
     const rows = [
@@ -760,6 +810,7 @@ function AdminDashboard() {
           return (
             <article
               key={complaint.id}
+              id={`complaint-card-${complaint.id}`}
               className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
             >
               <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
@@ -873,7 +924,8 @@ function AdminDashboard() {
                 </div>
               )}
 
-              {(complaint.assignedDepartment || complaint.assignedStaffName || complaint.assignedStaffId) && (
+              {normalize(complaint.status) === "assigned" &&
+                (complaint.assignedDepartment || complaint.assignedStaffName || complaint.assignedStaffId) && (
                 <p className="mt-3 text-sm text-emerald-700">
                   Assigned to: {complaint.assignedDepartment || "Unspecified Department"}
                   {complaint.assignedStaffName
@@ -997,7 +1049,20 @@ function AdminDashboard() {
                     {unreadCount > 0 && (
                       <button
                         className="text-xs font-semibold text-blue-600 hover:text-blue-500"
-                        onClick={() => setNotifications([])}
+                        onClick={() => {
+                          setNotifications([]);
+                          const latestComplaintTime = complaints.reduce((latest, complaint) => {
+                            const complaintTimestamp = new Date(complaint.createdAt || 0).getTime() || 0;
+                            return complaintTimestamp > latest ? complaintTimestamp : latest;
+                          }, 0);
+                          if (latestComplaintTime > persistedLastSeenComplaintMsRef.current) {
+                            persistedLastSeenComplaintMsRef.current = latestComplaintTime;
+                            localStorage.setItem(
+                              adminLastSeenComplaintStorageKey,
+                              String(latestComplaintTime)
+                            );
+                          }
+                        }}
                         type="button"
                       >
                         Mark all read
@@ -1009,16 +1074,20 @@ function AdminDashboard() {
                   ) : (
                     <div className="max-h-64 space-y-2 overflow-y-auto">
                       {notifications.map((item) => (
-                        <div
+                        <button
                           key={item.id}
-                          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+                          className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-left transition hover:border-blue-300 hover:bg-blue-50"
+                          onClick={() => openComplaintFromNotification(item)}
+                          type="button"
                         >
                           <p className="text-sm font-semibold text-slate-700">{item.title}</p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            #{item.complaintId} | {item.category} | {item.status}
+                          </p>
                           <p className="mt-0.5 text-xs text-slate-500">
-                            #{item.complaintId} |{' '}
                             {item.createdAt ? new Date(item.createdAt).toLocaleString() : "Just now"}
                           </p>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   )}
