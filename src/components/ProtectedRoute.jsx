@@ -13,9 +13,10 @@ function ProtectedRoute({ children, allowedRole }) {
     return <Navigate to="/login" replace />;
   }
 
-  const userRole = user && user.role ? user.role : null;
+  const userRole = user && user.role ? String(user.role).trim().toLowerCase() : null;
+  const expectedRole = allowedRole ? String(allowedRole).trim().toLowerCase() : null;
 
-  if (allowedRole && userRole !== allowedRole) {
+  if (expectedRole && userRole !== expectedRole) {
     return <Navigate to="/login" replace />;
   }
 

@@ -4,7 +4,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AdminDashboard from "./pages/AdminDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
-import StaffSDashboard from "./pages/StaffDashboard"; 
+import StaffDashboard from "./pages/StaffDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const routes = [
@@ -24,7 +24,7 @@ const routes = [
     path: "/staff-dashboard", 
     element: (
       <ProtectedRoute allowedRole="staff">
-        <StaffSDashboard />
+        <StaffDashboard />
       </ProtectedRoute>
     )
   },

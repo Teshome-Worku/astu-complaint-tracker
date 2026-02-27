@@ -460,7 +460,7 @@ function AdminDashboard() {
         const currentDraft = nextDrafts[complaint.id] || {};
         nextDrafts[complaint.id] = {
           department: currentDraft.department ?? complaint.assignedDepartment ?? "",
-          staffId: currentDraft.staffId ?? complaint.assignedStaffId ?? "",
+          staffId: currentDraft.staffId ?? complaint.assignedTo ?? complaint.assignedStaffId ?? "",
         };
       });
       return nextDrafts;
@@ -520,6 +520,7 @@ function AdminDashboard() {
     try {
       await axios.patch(`http://localhost:5000/complaints/${id}`, {
         assignedDepartment: selectedDraft.department,
+        assignedTo: selectedDraft.staffId,
         assignedStaffId: selectedDraft.staffId,
         assignedStaffName: selectedStaff?.name || "",
         status: "assigned",
@@ -603,6 +604,7 @@ function AdminDashboard() {
         complaint.category,
         complaint.status,
         complaint.assignedDepartment,
+        complaint.assignedTo,
         complaint.assignedStaffName,
         complaint.assignedStaffId,
         complaint.userId,
@@ -797,7 +799,8 @@ function AdminDashboard() {
         {filteredSortedComplaints.map((complaint) => {
           const selectedDraft = assignmentDrafts[complaint.id] || {};
           const selectedDepartment = selectedDraft.department ?? complaint.assignedDepartment ?? "";
-          const selectedStaffId = selectedDraft.staffId ?? complaint.assignedStaffId ?? "";
+          const selectedStaffId =
+            selectedDraft.staffId ?? complaint.assignedTo ?? complaint.assignedStaffId ?? "";
           const complaintStatus = normalize(complaint.status);
           const canAssign = complaintStatus === "pending" || complaintStatus === "new";
 
@@ -925,11 +928,16 @@ function AdminDashboard() {
               )}
 
               {normalize(complaint.status) === "assigned" &&
-                (complaint.assignedDepartment || complaint.assignedStaffName || complaint.assignedStaffId) && (
+                (complaint.assignedDepartment ||
+                  complaint.assignedStaffName ||
+                  complaint.assignedTo ||
+                  complaint.assignedStaffId) && (
                 <p className="mt-3 text-sm text-emerald-700">
                   Assigned to: {complaint.assignedDepartment || "Unspecified Department"}
                   {complaint.assignedStaffName
                     ? ` - ${complaint.assignedStaffName}`
+                    : complaint.assignedTo
+                      ? ` - Staff #${complaint.assignedTo}`
                     : complaint.assignedStaffId
                       ? ` - Staff #${complaint.assignedStaffId}`
                       : ""}
@@ -1499,7 +1507,7 @@ function AdminDashboard() {
                       Assignment requires both <span className="font-semibold">department</span> and <span className="font-semibold">staff</span>.
                     </div>
                     <div className="rounded-lg bg-slate-50 px-3 py-2">
-                      Staff receives tickets by <span className="font-semibold">assignedStaffId</span>.
+                      Staff receives tickets by <span className="font-semibold">assignedTo</span>.
                     </div>
                   </div>
                 </article>

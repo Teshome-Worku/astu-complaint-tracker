@@ -221,7 +221,9 @@ function StudentDashboard() {
         userId: user.id,
         status: "pending",
         assignedDepartment: null,
+        assignedTo: null,
         assignedStaffId: null,
+        remarks: "",
         createdAt: new Date().toISOString(),
         attachment: selectedImage
           ? {
