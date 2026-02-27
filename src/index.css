@@ -17,3 +17,46 @@
     min-height: 100vh;
   }
 }
+
+@keyframes slide-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(28px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@layer utilities {
+  .animate-slide-in-up {
+    animation: slide-in-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+    will-change: transform, opacity;
+  }
+
+  .animate-slide-in-up-delay {
+    animation: slide-in-up 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+    will-change: transform, opacity;
+  }
+
+  .safe-area-pt {
+    padding-top: max(env(safe-area-inset-top), 0px);
+  }
+
+  .safe-area-pb {
+    padding-bottom: max(env(safe-area-inset-bottom), 0px);
+  }
+
+  .safe-area-y {
+    padding-top: max(env(safe-area-inset-top), 0px);
+    padding-bottom: max(env(safe-area-inset-bottom), 0px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-slide-in-up,
+  .animate-slide-in-up-delay {
+    animation: none;
+  }
+}

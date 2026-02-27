@@ -23,53 +23,55 @@ const ctaLinks = [
     to: "/login",
     label: "Login",
     className:
-      "rounded-full bg-white px-8 py-3 text-sm font-semibold text-indigo-700 shadow-lg shadow-indigo-900/30 transition hover:-translate-y-0.5 hover:bg-slate-100 scale-105 hover:shadow-indigo-900/50",
+      "w-full rounded-full bg-white px-6 py-3 text-center text-sm font-semibold text-indigo-700 shadow-lg shadow-indigo-900/30 transition hover:bg-slate-100 sm:w-auto",
   },
   {
     to: "/register",
     label: "Register",
     className:
-      "rounded-full border border-white/80 px-8 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/10 scale-105 hover:border-white/100",
+      "w-full rounded-full border border-white/80 px-6 py-3 text-center text-sm font-semibold text-white transition hover:bg-white/10 hover:border-white/100 sm:w-auto",
   },
 ];
 
 function Landing() {
   return (
-    <main className="flex min-h-screen flex-col bg-slate-950 text-white">
-      <section className="relative isolate overflow-hidden px-6 py-24 text-center md:py-28">
+    <main className="safe-area-y flex min-h-screen flex-col overflow-x-clip bg-slate-950 text-white">
+      <section className="relative isolate overflow-hidden px-4 py-16 text-center sm:px-6 md:py-24 lg:py-28">
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,#818cf8_0%,#312e81_35%,#020617_70%)]" />
         <div className="mx-auto max-w-4xl">
-          <h1 className="text-4xl font-black leading-tight tracking-tight md:text-6xl">
+          <h1 className="text-3xl font-black leading-tight tracking-tight sm:text-4xl md:text-6xl">
             ASTU Smart Complaint
             <br />
             Tracking System
           </h1>
 
-          <p className="mx-auto mt-6 max-w-2xl text-base text-slate-200 md:text-lg">
+          <p className="mx-auto mt-5 max-w-xl text-sm leading-6 text-slate-200 sm:max-w-2xl sm:text-base md:text-lg">
             A centralized platform for complaint submission, tracking, and resolution
             that improves transparency, efficiency, and accountability.
           </p>
 
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+          <div className="mx-auto mt-8 flex w-full max-w-xs flex-col items-stretch justify-center gap-3 sm:mt-10 sm:max-w-none sm:flex-row sm:items-center sm:gap-4">
             {ctaLinks.map((linkItem) => (
               <Link key={linkItem.to} className={linkItem.className} to={linkItem.to}>
-                {linkItem.label} 
+                {linkItem.label}
               </Link>
             ))}
           </div>
-          <p className="mt-4 text-sm text-slate-400">Login or register to access your dashboard.</p>
+          <p className="mt-4 text-xs text-slate-400 sm:text-sm">
+            Login or register to access your dashboard.
+          </p>
         </div>
       </section>
 
-      <section className="bg-slate-50 px-6 py-16 text-slate-900">
-        <div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-3">
+      <section className="bg-slate-50 px-4 py-12 text-slate-900 sm:px-6 sm:py-16">
+        <div className="mx-auto grid max-w-6xl gap-5 sm:gap-8 md:grid-cols-3">
           {features.map((feature) => (
             <article
               key={feature.title}
-              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg sm:p-6"
             >
-              <h2 className="text-xl font-bold text-slate-900">{feature.title}</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-600">{feature.description}</p>
+              <h2 className="text-lg font-bold text-slate-900 sm:text-xl">{feature.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600 sm:mt-3">{feature.description}</p>
             </article>
           ))}
         </div>

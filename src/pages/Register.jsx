@@ -55,9 +55,9 @@ function Register() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="safe-area-pt safe-area-pb min-h-screen flex">
       {/* LEFT SIDE */}
-      <div className="hidden md:flex w-1/2 bg-linear-to-br from-indigo-700 via-purple-700 to-gray-900 text-white flex-col justify-center items-center p-12">
+      <div className="hidden md:flex w-1/2 bg-linear-to-br from-indigo-700 via-purple-700 to-gray-900 text-white flex-col justify-center items-center p-12 animate-slide-in-up">
         <h1 className="text-4xl font-extrabold mb-6 text-center leading-snug">
           Join ASTU Smart Complaint Tracking
         </h1>
@@ -75,13 +75,15 @@ function Register() {
       </div>
 
       {/* RIGHT SIDE */}
-      <div className="flex w-full md:w-1/2 bg-gray-950 items-center justify-center p-8">
-        <div className="w-full max-w-md bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl p-8">
-          <h2 className="text-2xl font-bold text-white mb-6 text-center">
+      <div className="flex w-full md:w-1/2 bg-gray-950 items-center justify-center p-4 sm:p-6 md:p-8">
+        <div className="w-full max-w-sm bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl p-6 sm:p-7 animate-slide-in-up-delay">
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-5 text-center">
             Create Account
           </h2>
 
-          <p className="mt-1 mb-4 text-xs text-slate-400 text-center">Register is for ASTU students only. If you are staff or an administrator, please contact your administrator or support.</p>
+          <p className="mt-1 mb-4 text-[11px] leading-4 text-slate-400 text-center">
+            Register is for ASTU students only. If you are staff or an administrator, please contact your administrator or support.
+          </p>
 
           {error && (
             <p className="mb-4 text-red-500 text-sm text-center">{error}</p>
@@ -89,50 +91,50 @@ function Register() {
 
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div>
-              <label className="block text-gray-400 mb-1">Full Name</label>
+              <label className="block text-sm text-gray-400 mb-1">Full Name</label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-indigo-500"
+                className="w-full px-3.5 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500"
               />
             </div>
 
             <div>
-              <label className="block text-gray-400 mb-1">Email</label>
+              <label className="block text-sm text-gray-400 mb-1">Email</label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-indigo-500"
+                className="w-full px-3.5 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500"
               />
             </div>
 
             <div>
-              <label className="block text-gray-400 mb-1">Password</label>
+              <label className="block text-sm text-gray-400 mb-1">Password</label>
               <input
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-indigo-500"
+                className="w-full px-3.5 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-semibold text-white transition duration-300"
+              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-sm font-semibold text-white transition duration-300"
             >
               Register
             </button>
           </form>
 
-          <p className="text-gray-400 text-center mt-6">
+          <p className="text-gray-400 text-center text-sm mt-5">
             Already have an account?{" "}
             <Link to="/login" className="text-indigo-400 hover:underline">
               Login

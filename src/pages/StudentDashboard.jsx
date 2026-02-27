@@ -1,38 +1,525 @@
 import axios from "axios";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState,useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
-const navigationItems = [
-  {
-    id: "submit",
-    label: "Submit Complaint",
-    helper: "Create a new complaint ticket",
-  },
-  {
-    id: "history",
-    label: "Complaint History",
-    helper: "See your previous submissions",
-  },
-  {
-    id: "track",
-    label: "Track Status",
-    helper: "Check progress and responses",
-  },
-  {
-    id: "chatbot",
-    label: "Ask Chatbot",
-    helper: "Get guidance before submitting",
-  },
-];
+// Reusable Components
+const Card = ({ children, className = "" }) => (
+  <div className={`bg-white rounded-xl shadow-sm border border-gray-100 p-6 ${className}`}>
+    {children}
+  </div>
+);
 
+const StatCard = ({ title, value, icon, color = "blue", trend, subtitle }) => {
+  const colorClasses = {
+    blue: "text-blue-600 bg-blue-50",
+    amber: "text-amber-600 bg-amber-50",
+    green: "text-green-600 bg-green-50",
+    purple: "text-purple-600 bg-purple-50",
+    red: "text-red-600 bg-red-50",
+    indigo: "text-indigo-600 bg-indigo-50",
+  };
+
+  return (
+    <Card className="hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-500">{title}</p>
+          <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
+          {subtitle && <p className="text-xs text-gray-400 mt-1">{subtitle}</p>}
+          {trend && (
+            <p className="text-xs text-green-600 mt-2 flex items-center">
+              <span>↑</span> {trend}
+            </p>
+          )}
+        </div>
+        <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
+          {icon}
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+const Button = ({ children, variant = "primary", size = "md", onClick, disabled, className = "", ...props }) => {
+  const variants = {
+    primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
+    secondary: "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-gray-500",
+    danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
+    ghost: "text-gray-600 hover:bg-gray-100 focus:ring-gray-500",
+    outline: "border border-blue-600 text-blue-600 hover:bg-blue-50",
+    success: "bg-green-600 text-white hover:bg-green-700 focus:ring-green-500",
+  };
+
+  const sizes = {
+    sm: "px-3 py-1.5 text-sm",
+    md: "px-4 py-2 text-sm",
+    lg: "px-6 py-3 text-base",
+  };
+
+  return (
+    <button
+      className={`
+        inline-flex items-center justify-center font-medium rounded-lg
+        transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2
+        disabled:opacity-50 disabled:cursor-not-allowed
+        ${variants[variant]} ${sizes[size]} ${className}
+      `}
+      onClick={onClick}
+      disabled={disabled}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+};
+
+const Input = ({ label, error, icon, className = "", ...props }) => (
+  <div className="space-y-1.5">
+    {label && (
+      <label className="block text-sm font-medium text-gray-700">
+        {label}
+      </label>
+    )}
+    <div className="relative">
+      {icon && (
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+          {icon}
+        </div>
+      )}
+      <input
+        className={`
+          w-full rounded-lg border border-gray-300 px-4 py-3
+          ${icon ? 'pl-10' : ''}
+          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+          transition-shadow duration-200
+          ${error ? "border-red-300 focus:ring-red-500" : ""}
+          ${className}
+        `}
+        {...props}
+      />
+    </div>
+    {error && <p className="text-sm text-red-600">{error}</p>}
+  </div>
+);
+
+const TextArea = ({ label, error, showCount = false, maxLength, className = "", ...props }) => {
+  const [charCount, setCharCount] = useState(0);
+
+  const handleChange = (e) => {
+    setCharCount(e.target.value.length);
+    if (props.onChange) props.onChange(e);
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        {label && <label className="block text-sm font-medium text-gray-700">{label}</label>}
+        {showCount && maxLength && (
+          <span className="text-xs text-gray-400">{charCount}/{maxLength}</span>
+        )}
+      </div>
+      <textarea
+        className={`
+          w-full rounded-lg border border-gray-300 px-4 py-3
+          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+          transition-shadow duration-200 resize-none
+          ${error ? "border-red-300 focus:ring-red-500" : ""}
+          ${className}
+        `}
+        maxLength={maxLength}
+        onChange={handleChange}
+        {...props}
+      />
+      {error && <p className="text-sm text-red-600">{error}</p>}
+    </div>
+  );
+};
+
+const StatusBadge = ({ status }) => {
+  const variants = {
+    pending: "bg-amber-50 text-amber-700 border-amber-200",
+    "in-progress": "bg-sky-50 text-sky-700 border-sky-200",
+    resolved: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    assigned: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  };
+
+  const labels = {
+    pending: "Pending",
+    "in-progress": "In Progress",
+    resolved: "Resolved",
+    assigned: "Assigned",
+  };
+
+  return (
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${variants[status] || variants.pending}`}>
+      {labels[status] || status}
+    </span>
+  );
+};
+
+const ProgressTracker = ({ complaint }) => {
+  const steps = [
+    { status: "pending", label: "Submitted", description: "Your complaint has been received" },
+    { status: "assigned", label: "Assigned", description: "Assigned to relevant department" },
+    { status: "in-progress", label: "In Progress", description: "Staff is working on it" },
+    { status: "resolved", label: "Resolved", description: "Issue has been resolved" },
+  ];
+
+  const currentStepIndex = steps.findIndex(step => step.status === complaint?.status);
+
+  return (
+    <div className="space-y-4">
+      {steps.map((step, index) => {
+        const isCompleted = index <= currentStepIndex;
+        const isCurrent = index === currentStepIndex;
+
+        return (
+          <div key={step.status} className="flex items-start space-x-3">
+            <div className="flex flex-col items-center">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                isCompleted 
+                  ? isCurrent 
+                    ? "bg-blue-600 text-white ring-4 ring-blue-100" 
+                    : "bg-green-600 text-white"
+                  : "bg-gray-200 text-gray-400"
+              }`}>
+                {index < currentStepIndex ? (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : (
+                  <span>{index + 1}</span>
+                )}
+              </div>
+              {index < steps.length - 1 && (
+                <div className={`w-0.5 h-12 mt-1 ${
+                  index < currentStepIndex ? "bg-green-200" : "bg-gray-200"
+                }`} />
+              )}
+            </div>
+            <div className="flex-1 pt-1">
+              <p className={`text-sm font-medium ${isCompleted ? "text-gray-900" : "text-gray-400"}`}>
+                {step.label}
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">{step.description}</p>
+              {isCurrent && complaint?.remarks && (
+                <p className="text-xs text-blue-600 mt-2 bg-blue-50 p-2 rounded-lg">
+                  Staff remarks: {complaint.remarks}
+                </p>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+const EmptyState = ({ title, description, icon, action }) => (
+  <div className="text-center py-12">
+    <div className="inline-flex p-4 bg-gray-100 rounded-full mb-4">
+      {icon || (
+        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+        </svg>
+      )}
+    </div>
+    <h3 className="text-lg font-medium text-gray-900 mb-2">{title}</h3>
+    <p className="text-gray-500 mb-4">{description}</p>
+    {action && action}
+  </div>
+);
+
+const Modal = ({ isOpen, onClose, title, children, size = "md" }) => {
+  if (!isOpen) return null;
+
+  const sizes = {
+    sm: "max-w-md",
+    md: "max-w-lg",
+    lg: "max-w-2xl",
+    xl: "max-w-4xl",
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 transition-opacity" onClick={onClose} />
+        
+        <div className={`relative bg-white rounded-xl shadow-xl w-full ${sizes[size]} animate-fadeIn`}>
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-500 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="p-6">{children}</div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Chatbot Component
+const ChatbotPanel = ({ isOpen, onClose }) => {
+  const [messages, setMessages] = useState([
+    {
+      id: 1,
+      type: "bot",
+      content: "Hi! I'm your ASTU assistant. How can I help you today?",
+      timestamp: new Date(),
+    },
+  ]);
+  const [inputMessage, setInputMessage] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const quickActions = [
+    { text: "How to submit a complaint?", icon: "📝" },
+    { text: "Check complaint status", icon: "🔍" },
+    { text: "What categories exist?", icon: "📋" },
+    { text: "Resolution time?", icon: "⏱️" },
+  ];
+
+  const handleSendMessage = () => {
+    if (!inputMessage.trim()) return;
+
+    const userMessage = {
+      id: messages.length + 1,
+      type: "user",
+      content: inputMessage,
+      timestamp: new Date(),
+    };
+    setMessages(prev => [...prev, userMessage]);
+    setInputMessage("");
+    setIsTyping(true);
+
+    setTimeout(() => {
+      const botResponse = {
+        id: messages.length + 2,
+        type: "bot",
+        content: getBotResponse(inputMessage),
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, botResponse]);
+      setIsTyping(false);
+    }, 1500);
+  };
+
+  const getBotResponse = (message) => {
+    const lowerMessage = message.toLowerCase();
+    if (lowerMessage.includes("submit") || lowerMessage.includes("complaint")) {
+      return "To submit a complaint: 1. Go to 'Submit Complaint' from the dashboard 2. Fill in the title and description 3. Select the appropriate category 4. Add an image if needed 5. Click submit. Would you like me to guide you through any specific step?";
+    }
+    if (lowerMessage.includes("status") || lowerMessage.includes("track")) {
+      return "You can track your complaint status in the 'Track Progress' section. Each complaint shows its current status (Pending, Assigned, In Progress, or Resolved). Click on any complaint to see detailed progress.";
+    }
+    if (lowerMessage.includes("category")) {
+      return "We have several categories: General, Academic, Finance, IT, Facility, and Discipline. Choose the one that best matches your issue for faster resolution.";
+    }
+    if (lowerMessage.includes("time") || lowerMessage.includes("how long")) {
+      return "Resolution times vary by category: IT issues typically 24-48 hours, Academic 2-3 days, Facility 3-5 days. Complex issues may take longer. You'll get updates as your complaint progresses.";
+    }
+    return "I'm here to help with submitting complaints, tracking status, understanding categories, and general FAQs. Could you please rephrase your question or contact support for specific issues?";
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-y-0 right-0 w-96 bg-white shadow-2xl flex flex-col border-l border-gray-200 z-50 animate-slideIn">
+      <div className="p-4 border-b border-gray-200 bg-linear-to-r from-blue-600 to-blue-700">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+              <span className="text-blue-600 font-bold">AI</span>
+            </div>
+            <div>
+              <h3 className="font-semibold text-white">AI Assistant</h3>
+              <p className="text-xs text-blue-100">Online • Ready to help</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-white/80 hover:text-white transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+        {messages.map((message) => (
+          <div
+            key={message.id}
+            className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
+          >
+            <div
+              className={`max-w-[80%] rounded-lg p-3 ${
+                message.type === "user"
+                  ? "bg-blue-600 text-white"
+                  : "bg-white border border-gray-200 text-gray-800"
+              }`}
+            >
+              <p className="text-sm">{message.content}</p>
+              <p className={`text-xs mt-1 ${message.type === "user" ? "text-blue-100" : "text-gray-400"}`}>
+                {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </p>
+            </div>
+          </div>
+        ))}
+        {isTyping && (
+          <div className="flex justify-start">
+            <div className="bg-white border border-gray-200 rounded-lg p-3">
+              <div className="flex space-x-1">
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0s" }}></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.4s" }}></div>
+              </div>
+            </div>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <div className="p-4 border-t border-gray-200 bg-white">
+        <p className="text-xs font-medium text-gray-500 mb-2">QUICK ACTIONS</p>
+        <div className="grid grid-cols-2 gap-2">
+          {quickActions.map((action, index) => (
+            <button
+              key={index}
+              onClick={() => {
+                setInputMessage(action.text);
+                setTimeout(() => handleSendMessage(), 100);
+              }}
+              className="flex items-center space-x-2 p-2 text-xs text-gray-600 hover:bg-gray-50 rounded-lg transition-colors border border-gray-200"
+            >
+              <span>{action.icon}</span>
+              <span className="truncate">{action.text}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="p-4 border-t border-gray-200 bg-white">
+        <div className="flex items-center space-x-2">
+          <input
+            type="text"
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+            placeholder="Type your message..."
+            className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleSendMessage}
+            disabled={!inputMessage.trim()}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Icon Components
+const DashboardIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+  </svg>
+);
+
+const SubmitIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+  </svg>
+);
+
+const HistoryIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const TrackIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+  </svg>
+);
+
+const ChatIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+  </svg>
+);
+
+const LogoutIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+  </svg>
+);
+
+const SearchIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+  </svg>
+);
+
+const NotificationIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+  </svg>
+);
+
+const ComplaintIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+  </svg>
+);
+
+const PendingIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const ProgressIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+  </svg>
+);
+
+const ResolvedIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+// Helper Functions
 const categoryOptions = ["General", "Academic", "Finance", "IT", "Facility", "Discipline"];
 const allowedImageTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
 const allowedImageExtensions = [".jpg", ".jpeg", ".png", ".webp"];
-const serverPayloadLimitBytes = 100 * 1024;
 const maxImageSizeBytes = 70 * 1024;
 const maxDataUrlBytes = 90 * 1024;
 
-// image reader helper function
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -42,7 +529,6 @@ function readFileAsDataUrl(file) {
   });
 }
 
-// image size calculator
 function formatFileSize(size) {
   if (size >= 1024 * 1024) {
     return `${(size / (1024 * 1024)).toFixed(2)} MB`;
@@ -50,12 +536,14 @@ function formatFileSize(size) {
   return `${Math.max(1, Math.round(size / 1024))} KB`;
 }
 
+// Main Component
 function StudentDashboard() {
   const navigate = useNavigate();
   const imageInputRef = useRef(null);
   const user = JSON.parse(localStorage.getItem("user"));
 
-  const [activeSection, setActiveSection] = useState("submit");
+  const [activeSection, setActiveSection] = useState("dashboard");
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionFeedback, setSubmissionFeedback] = useState({
     type: "idle",
@@ -69,13 +557,29 @@ function StudentDashboard() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imageError, setImageError] = useState("");
   const [isReadingImage, setIsReadingImage] = useState(false);
-
-  // complaint history
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
 
+  // Fetch all complaints for dashboard
+  const fetchAllComplaints = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const res = await axios.get(`http://localhost:5000/complaints?userId=${user.id}`);
+      setComplaints(res.data);
+    } catch (error) {
+      console.error("Failed to fetch complaints", error);
+    }
+  }, [user?.id]);
 
-//   mount when history section is active or user changes (e.g. after login
+  // Initial fetch
+  useEffect(() => {
+    fetchAllComplaints();
+  }, [fetchAllComplaints]);
+
+  // Fetch complaints based on section
   useEffect(() => {
     const fetchComplaints = async () => {
       if (!user?.id) return;
@@ -90,18 +594,26 @@ function StudentDashboard() {
       }
     };
 
-    if (activeSection === "history") {
+    if (activeSection === "history" || activeSection === "track") {
       fetchComplaints();
     }
   }, [activeSection, user?.id]);
 
-//   logout
+  // Calculate dashboard metrics
+  const metrics = {
+    total: complaints.length,
+    pending: complaints.filter(c => c.status === "pending").length,
+    inProgress: complaints.filter(c => c.status === "in-progress" || c.status === "assigned").length,
+    resolved: complaints.filter(c => c.status === "resolved").length,
+  };
+
+  // Logout
   const handleLogout = () => {
     localStorage.removeItem("user");
     navigate("/login");
   };
-  
-//   image and complaint form handlers
+
+  // Form handlers
   const handleComplaintChange = (event) => {
     const { name, value } = event.target;
     setComplaintData((prev) => ({
@@ -110,14 +622,10 @@ function StudentDashboard() {
     }));
 
     if (submissionFeedback.type !== "idle") {
-      setSubmissionFeedback({
-        type: "idle",
-        message: "",
-      });
+      setSubmissionFeedback({ type: "idle", message: "" });
     }
   };
-  
-//   clear image function to reset image state and clear file input
+
   const clearImage = () => {
     setSelectedImage(null);
     setImageError("");
@@ -134,7 +642,7 @@ function StudentDashboard() {
       setSelectedImage(null);
       return;
     }
-    // image validation logic: type, extension, size
+
     const normalizedType = file.type.toLowerCase();
     const normalizedName = file.name.toLowerCase();
     const isAllowedType = allowedImageTypes.includes(normalizedType);
@@ -151,7 +659,7 @@ function StudentDashboard() {
 
     if (file.size > maxImageSizeBytes) {
       setSelectedImage(null);
-      setImageError("Image is too large for local server. Please use an image smaller than 70KB.");
+      setImageError("Image is too large. Please use an image smaller than 70KB.");
       event.target.value = "";
       return;
     }
@@ -163,7 +671,7 @@ function StudentDashboard() {
       const dataUrlBytes = new Blob([dataUrl]).size;
       if (dataUrlBytes > maxDataUrlBytes) {
         setSelectedImage(null);
-        setImageError("Image is too large after encoding. Use a smaller JPG/PNG image.");
+        setImageError("Image is too large after encoding. Use a smaller image.");
         event.target.value = "";
         return;
       }
@@ -181,8 +689,7 @@ function StudentDashboard() {
       setIsReadingImage(false);
     }
   };
-  
-//   reset form function to clear all fields and feedback
+
   const resetForm = () => {
     setComplaintData({
       title: "",
@@ -190,13 +697,9 @@ function StudentDashboard() {
       category: "General",
     });
     clearImage();
-    setSubmissionFeedback({
-      type: "idle",
-      message: "",
-    });
+    setSubmissionFeedback({ type: "idle", message: "" });
   };
-   
-//   complaint submission handling
+
   const handleComplaintSubmit = async (event) => {
     event.preventDefault();
     if (isSubmitting || isReadingImage) return;
@@ -210,10 +713,7 @@ function StudentDashboard() {
     }
 
     setIsSubmitting(true);
-    setSubmissionFeedback({
-      type: "idle",
-      message: "",
-    });
+    setSubmissionFeedback({ type: "idle", message: "" });
 
     try {
       await axios.post("http://localhost:5000/complaints", {
@@ -237,377 +737,712 @@ function StudentDashboard() {
 
       setSubmissionFeedback({
         type: "success",
-        message: "Complaint submitted successfully. You can track it in the status section.",
+        message: "Complaint submitted successfully!",
       });
-      setTimeout(()=>{
-        setSubmissionFeedback({
-          type: "idle",
-          message: "",
-        });
-      }, 5000)
 
-      setComplaintData({
-        title: "",
-        description: "",
-        category: "General",
-      });
-      clearImage();
+      // Refresh complaints
+      fetchAllComplaints();
+
+      setTimeout(() => {
+        setSubmissionFeedback({ type: "idle", message: "" });
+      }, 5000);
+
+      resetForm();
     } catch (error) {
       const isPayloadTooLarge = error?.response?.status === 413;
       setSubmissionFeedback({
         type: "error",
         message: isPayloadTooLarge
-          ? "Image payload is too large for the local server limit (100KB). Use a smaller image."
-          : "Failed to submit complaint. Please try again in a moment.",
+          ? "Image payload is too large. Use a smaller image."
+          : "Failed to submit complaint. Please try again.",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const renderPlaceholderSection = (title, description) => (
-    <section className="mx-auto w-full max-w-5xl">
-      <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-8 shadow-2xl shadow-black/30">
-        <h2 className="text-2xl font-bold text-white">{title}</h2>
-        <p className="mt-2 text-slate-400">{description}</p>
-      </div>
-    </section>
+  const handleTrackProgress = (complaint) => {
+    setSelectedComplaint(complaint);
+    setIsTrackModalOpen(true);
+  };
+
+  // Filter complaints
+  const filteredComplaints = complaints.filter(complaint =>
+    complaint.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    complaint.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    complaint.category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const feedbackClassName =
-    submissionFeedback.type === "success"
-      ? "rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200"
-      : "rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200";
+  // Navigation items
+  const navigationItems = [
+    {
+      id: "dashboard",
+      label: "Dashboard",
+      icon: DashboardIcon,
+      helper: "Overview & statistics",
+    },
+    {
+      id: "submit",
+      label: "Submit Complaint",
+      icon: SubmitIcon,
+      helper: "Create a new complaint",
+    },
+    {
+      id: "history",
+      label: "History",
+      icon: HistoryIcon,
+      helper: "View all complaints",
+    },
+    {
+      id: "track",
+      label: "Track Progress",
+      icon: TrackIcon,
+      helper: "Monitor your complaints",
+    },
+  ];
+
+  // Render functions for each section
+  const renderDashboard = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard
+          title="Total Complaints"
+          value={metrics.total}
+          icon={<ComplaintIcon className="w-6 h-6" />}
+          color="blue"
+          subtitle="All time submissions"
+        />
+        <StatCard
+          title="Pending"
+          value={metrics.pending}
+          icon={<PendingIcon className="w-6 h-6" />}
+          color="amber"
+          subtitle="Awaiting review"
+        />
+        <StatCard
+          title="In Progress"
+          value={metrics.inProgress}
+          icon={<ProgressIcon className="w-6 h-6" />}
+          color="purple"
+          subtitle="Being handled"
+        />
+        <StatCard
+          title="Resolved"
+          value={metrics.resolved}
+          icon={<ResolvedIcon className="w-6 h-6" />}
+          color="green"
+          subtitle="Completed"
+        />
+      </div>
+
+      {/* Recent Activity */}
+      <Card>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setActiveSection("history")}
+          >
+            View All
+          </Button>
+        </div>
+
+        {complaints.length === 0 ? (
+          <EmptyState
+            title="No complaints yet"
+            description="Submit your first complaint to get started"
+            action={
+              <Button
+                variant="primary"
+                onClick={() => setActiveSection("submit")}
+              >
+                Submit Complaint
+              </Button>
+            }
+          />
+        ) : (
+          <div className="space-y-4">
+            {complaints.slice(0, 5).map((complaint) => (
+              <div
+                key={complaint.id}
+                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                onClick={() => handleTrackProgress(complaint)}
+              >
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3">
+                    <h3 className="text-sm font-medium text-gray-900">{complaint.title}</h3>
+                    <StatusBadge status={complaint.status} />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {complaint.category} • {new Date(complaint.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      {/* Quick Tips */}
+      <Card className="bg-linear-to-r from-blue-50 to-indigo-50 border-blue-200">
+        <h3 className="text-sm font-semibold text-blue-900 mb-3">✨ Quick Tips</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="flex items-start space-x-3">
+            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
+              <span className="text-blue-600">1</span>
+            </div>
+            <p className="text-sm text-blue-800">Be specific in your complaint description</p>
+          </div>
+          <div className="flex items-start space-x-3">
+            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
+              <span className="text-blue-600">2</span>
+            </div>
+            <p className="text-sm text-blue-800">Attach images to help explain the issue</p>
+          </div>
+          <div className="flex items-start space-x-3">
+            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
+              <span className="text-blue-600">3</span>
+            </div>
+            <p className="text-sm text-blue-800">Track progress regularly for updates</p>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+
+  const renderSubmitComplaint = () => (
+    <div className="max-w-4xl mx-auto">
+      <Card>
+        <div className="mb-8">
+          <h2 className="text-2xl font-semibold text-gray-900">Submit a New Complaint</h2>
+          <p className="text-sm text-gray-500 mt-2">
+            Please provide detailed information about your issue. The more specific you are, 
+            the faster we can help resolve it.
+          </p>
+        </div>
+
+        <form onSubmit={handleComplaintSubmit} className="space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Input
+              label="Title"
+              placeholder="e.g., Issue with hostel WiFi"
+              name="title"
+              value={complaintData.title}
+              onChange={handleComplaintChange}
+              required
+              className="bg-gray-50 focus:bg-white"
+            />
+
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-gray-700">
+                Category
+              </label>
+              <select
+                name="category"
+                value={complaintData.category}
+                onChange={handleComplaintChange}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                {categoryOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <TextArea
+            label="Description"
+            placeholder="Describe your issue in detail. Include dates, times, locations, and any other relevant information..."
+            name="description"
+            value={complaintData.description}
+            onChange={handleComplaintChange}
+            rows={6}
+            required
+            showCount
+            maxLength={600}
+            className="bg-gray-50 focus:bg-white"
+          />
+
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-gray-700">
+              Attachment (Optional)
+            </label>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp"
+                onChange={handleImageChange}
+                className="hidden"
+                id="file-upload"
+              />
+              <label
+                htmlFor="file-upload"
+                className="cursor-pointer"
+              >
+                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <p className="mt-2 text-sm text-gray-600">
+                  <span className="font-semibold text-blue-600">Click to upload</span> or drag and drop
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  PNG, JPG, WEBP up to 70KB
+                </p>
+              </label>
+            </div>
+          </div>
+
+          {selectedImage && (
+            <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+              <div className="flex items-start space-x-4">
+                <img
+                  src={selectedImage.dataUrl}
+                  alt="Preview"
+                  className="w-24 h-24 object-cover rounded-lg border border-gray-200"
+                />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">{selectedImage.fileName}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {formatFileSize(selectedImage.size)}
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearImage}
+                    className="mt-2 text-red-600 hover:text-red-700"
+                  >
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {isReadingImage && (
+            <div className="text-sm text-blue-600 bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center">
+              <svg className="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Processing image...
+            </div>
+          )}
+
+          {imageError && (
+            <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+              {imageError}
+            </div>
+          )}
+
+          {submissionFeedback.type !== "idle" && (
+            <div className={`text-sm p-4 rounded-lg flex items-center ${
+              submissionFeedback.type === "success"
+                ? "text-green-600 bg-green-50 border border-green-200"
+                : "text-red-600 bg-red-50 border border-red-200"
+            }`}>
+              {submissionFeedback.type === "success" ? (
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )}
+              {submissionFeedback.message}
+            </div>
+          )}
+
+          <div className="flex items-center space-x-4">
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              disabled={isSubmitting || isReadingImage}
+              className="min-w-50"
+            >
+              {isSubmitting ? (
+                <span className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Submitting...
+                </span>
+              ) : "Submit Complaint"}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="lg"
+              onClick={resetForm}
+            >
+              Reset Form
+            </Button>
+          </div>
+        </form>
+      </Card>
+    </div>
+  );
+
+  const renderHistory = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-semibold text-gray-900">Complaint History</h2>
+        <div className="relative">
+          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search complaints..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg w-80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      ) : filteredComplaints.length === 0 ? (
+        <EmptyState
+          title="No complaints found"
+          description={searchTerm ? "Try adjusting your search" : "You haven't submitted any complaints yet"}
+          action={
+            !searchTerm && (
+              <Button
+                variant="primary"
+                onClick={() => setActiveSection("submit")}
+              >
+                Submit Your First Complaint
+              </Button>
+            )
+          }
+        />
+      ) : (
+        <div className="grid gap-4">
+          {filteredComplaints.map((complaint) => (
+            <Card key={complaint.id} className="hover:shadow-md transition-all cursor-pointer" onClick={() => handleTrackProgress(complaint)}>
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <h3 className="text-lg font-semibold text-gray-900">{complaint.title}</h3>
+                    <StatusBadge status={complaint.status} />
+                  </div>
+                  <p className="text-sm text-gray-500 mb-2">
+                    Ticket ID: #{complaint.id} • {complaint.category}
+                  </p>
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">{complaint.description}</p>
+                  
+                  <div className="flex items-center space-x-4 text-xs text-gray-400">
+                    <span>Submitted: {new Date(complaint.createdAt).toLocaleString()}</span>
+                    {complaint.remarks && <span>• Has staff remarks</span>}
+                    {complaint.attachment && <span>• Has attachment</span>}
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleTrackProgress(complaint);
+                  }}
+                  className="ml-4"
+                >
+                  Track Progress
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderTrackProgress = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-semibold text-gray-900">Track Complaint Progress</h2>
+      
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      ) : complaints.length === 0 ? (
+        <EmptyState
+          title="No complaints to track"
+          description="Submit a complaint first to track its progress"
+          action={
+            <Button
+              variant="primary"
+              onClick={() => setActiveSection("submit")}
+            >
+              Submit Complaint
+            </Button>
+          }
+        />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1 space-y-4">
+            <h3 className="text-sm font-medium text-gray-500 mb-3">SELECT COMPLAINT</h3>
+            {complaints.map((complaint) => (
+              <div
+                key={complaint.id}
+                className={`p-4 rounded-lg border cursor-pointer transition-all ${
+                  selectedComplaint?.id === complaint.id
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"
+                }`}
+                onClick={() => setSelectedComplaint(complaint)}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <h4 className="text-sm font-medium text-gray-900">{complaint.title}</h4>
+                  <StatusBadge status={complaint.status} />
+                </div>
+                <p className="text-xs text-gray-500">
+                  {complaint.category} • {new Date(complaint.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="lg:col-span-2">
+            {selectedComplaint ? (
+              <Card>
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900">{selectedComplaint.title}</h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Ticket #{selectedComplaint.id} • {selectedComplaint.category}
+                  </p>
+                </div>
+
+                <ProgressTracker complaint={selectedComplaint} />
+
+                {selectedComplaint.attachment?.dataUrl && (
+                  <div className="mt-6">
+                    <p className="text-xs font-medium text-gray-500 mb-2">ATTACHMENT</p>
+                    <img
+                      src={selectedComplaint.attachment.dataUrl}
+                      alt="Attachment"
+                      className="h-32 w-auto rounded-lg border border-gray-200"
+                    />
+                  </div>
+                )}
+
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <p className="text-xs text-gray-400">
+                    Submitted: {new Date(selectedComplaint.createdAt).toLocaleString()}
+                  </p>
+                </div>
+              </Card>
+            ) : (
+              <Card className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <TrackIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500">Select a complaint to view progress</p>
+                </div>
+              </Card>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 lg:flex lg:h-screen">
-      <aside className="w-full border-b border-slate-800 bg-slate-900/90 lg:sticky lg:top-0 lg:h-screen lg:w-72 lg:border-b-0 lg:border-r">
-        <div className="flex h-full flex-col p-6 lg:p-7 ">
-          <div>
-            <h2 className="text-2xl font-black tracking-tight text-indigo-400">Student Panel</h2>
-            <p className="mt-1 text-sm text-slate-400">Manage your complaints from one place.</p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Sidebar */}
+      <aside className="fixed left-0 top-0 h-screen w-72 bg-white border-r border-gray-200 flex flex-col">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-linear-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-xl">A</span>
+            </div>
+            <div>
+              <h1 className="font-semibold text-gray-900">ASTU Tracker</h1>
+              <p className="text-xs text-gray-500">Student Dashboard</p>
+            </div>
           </div>
-          <nav className="mt-8 space-y-2 " >
-            {navigationItems.map((item) => {
-              const isActive = activeSection === item.id;
+        </div>
 
-              return (
-                <button
-                  key={item.id}
-                  className={`group w-full rounded-xl px-4 py-3 text-left transition hover:cursor-pointer ${
-                    isActive
-                      ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/40"
-                      : "text-slate-300 hover:bg-slate-800/80 hover:text-white bg-slate-800/20"
-                  }`}
-                  onClick={() => setActiveSection(item.id)}
-                >
-                  <span className="block text-base font-semibold">{item.label}</span>
-                  <span
-                    className={`mt-0.5 block text-xs ${
-                      isActive ? "text-indigo-100" : "text-slate-500 group-hover:text-slate-300"
-                    }`}
-                  >
+        <nav className="flex-1 p-4 space-y-1">
+          {navigationItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeSection === item.id;
+
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveSection(item.id)}
+                className={`
+                  w-full flex items-center space-x-3 px-4 py-3 rounded-xl
+                  transition-all duration-200 group relative
+                  ${isActive
+                    ? "bg-linear-to-r from-blue-50 to-indigo-50 text-blue-600"
+                    : "text-gray-600 hover:bg-gray-50"
+                  }
+                `}
+              >
+                <Icon className={`w-5 h-5 ${
+                  isActive ? "text-blue-600" : "text-gray-400 group-hover:text-gray-500"
+                }`} />
+                <div className="text-left">
+                  <span className="text-sm font-medium block">{item.label}</span>
+                  <span className={`text-xs ${isActive ? "text-blue-400" : "text-gray-400"}`}>
                     {item.helper}
                   </span>
-                </button>
-              );
-            })}
-          </nav>
-            {/* logout button*/}
+                </div>
+                {isActive && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-blue-600 rounded-r-full" />
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="p-4 border-t border-gray-200 space-y-2">
           <button
-            className="mt-14 w-full rounded-xl bg-rose-600 px-4 py-2.5 font-semibold text-white transition hover:bg-rose-500 cursor-pointer"
-            onClick={handleLogout}
+            onClick={() => setIsChatbotOpen(true)}
+            className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group"
           >
-            Logout
+            <ChatIcon className="w-5 h-5 text-gray-400 group-hover:text-blue-600" />
+            <div className="text-left">
+              <span className="text-sm font-medium block">Ask Assistant</span>
+              <span className="text-xs text-gray-400">Get help & guidance</span>
+            </div>
+          </button>
+
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all duration-200 group"
+          >
+            <LogoutIcon className="w-5 h-5 text-gray-400 group-hover:text-red-600" />
+            <div className="text-left">
+              <span className="text-sm font-medium block">Logout</span>
+              <span className="text-xs text-gray-400">End session</span>
+            </div>
           </button>
         </div>
       </aside>
 
-      <div className="flex-1 lg:h-screen lg:overflow-y-auto">
-        <header className="border-b border-slate-800 bg-slate-900/85 px-4 py-4 backdrop-blur lg:sticky lg:top-0 lg:z-20 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h1 className="text-xl font-bold text-white">Welcome, {user?.name}</h1>
-              <p className="text-sm text-slate-400">Submit, review, and track your cases.</p>
+      {/* Main Content */}
+      <div className="ml-72 flex-1">
+        {/* Top Navbar */}
+        <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+          <div className="px-8 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-semibold text-gray-900">
+                  {navigationItems.find(item => item.id === activeSection)?.label}
+                </h1>
+                <p className="text-sm text-gray-500 mt-1">
+                  {navigationItems.find(item => item.id === activeSection)?.helper}
+                </p>
+              </div>
+
+              <div className="flex items-center space-x-6">
+                <button className="relative p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
+                  <NotificationIcon className="w-6 h-6" />
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
+                    <span className="text-white font-semibold">
+                      {user?.name?.charAt(0) || "S"}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{user?.name || "Student"}</p>
+                    <p className="text-xs text-gray-500">Student</p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <span className="rounded-full border border-slate-700 bg-slate-800 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-300">
-              Role: {user?.role}
-            </span>
           </div>
         </header>
 
-        <main className="p-4 sm:p-6 lg:p-8">
-            {/* submit section */}
-          {activeSection === "submit" && (
-            <section className="mx-auto w-full max-w-6xl">
-              <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
-                <div className="rounded-3xl border border-slate-800 bg-slate-900/70 shadow-2xl shadow-black/30">
-                  <div className="border-b border-slate-800 px-6 py-6 sm:px-8">
-                    <p className="inline-flex rounded-full border border-indigo-400/40 bg-indigo-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-indigo-300">
-                      New Ticket
-                    </p>
-                    <h2 className="mt-4 text-3xl font-black tracking-tight text-white">
-                      Submit a Complaint
-                    </h2>
-                    <p className="mt-2 text-sm text-slate-400">
-                      Share what happened clearly so the right team can resolve it faster.
-                    </p>
-                  </div>
-
-                  <form className="space-y-6 px-6 py-6 sm:px-8" onSubmit={handleComplaintSubmit}>
-                    <label className="block">
-                      <span className="mb-2 block text-sm font-semibold text-slate-300">Title</span>
-                      <input
-                        className="w-full rounded-xl border border-slate-700 bg-slate-800/90 px-4 py-3 text-slate-100 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
-                        name="title"
-                        onChange={handleComplaintChange}
-                        placeholder="Example: Delay in exam result publication"
-                        required
-                        type="text"
-                        value={complaintData.title}
-                      />
-                    </label>
-
-                    <label className="block">
-                      <div className="mb-2 flex items-center justify-between">
-                        <span className="text-sm font-semibold text-slate-300">Description</span>
-                        <span className="text-xs text-slate-500">
-                          {complaintData.description.length}/600
-                        </span>
-                      </div>
-                      <textarea
-                        className="min-h-44 w-full rounded-xl border border-slate-700 bg-slate-800/90 px-4 py-3 text-slate-100 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 resize-none"
-                        maxLength={600}
-                        name="description"
-                        onChange={handleComplaintChange}
-                        placeholder="Provide key details like when it happened, where, and any steps you already took."
-                        required
-                        rows={7}
-                        value={complaintData.description}
-                      />
-                    </label>
-
-                    <label className="block">
-                      <span className="mb-2 block text-sm font-semibold text-slate-300">Category</span>
-                      <select
-                        className="w-full rounded-xl border border-slate-700 bg-slate-800/90 px-4 py-3 text-slate-100 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
-                        name="category"
-                        onChange={handleComplaintChange}
-                        value={complaintData.category}
-                      >
-                        {categoryOptions.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-
-                    <label className="block">
-                      <span className="mb-2 block text-sm font-semibold text-slate-300">
-                        Evidence Image (optional)
-                      </span>
-                      <input
-                        ref={imageInputRef}
-                        accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-                        className="w-full rounded-xl border border-slate-700 bg-slate-800/90 px-4 py-2.5 text-sm text-slate-200 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-indigo-600 file:px-3 file:py-1.5 file:font-semibold file:text-white hover:file:bg-indigo-500"
-                        onChange={handleImageChange}
-                        type="file"
-                      />
-                      <p className="mt-2 text-xs text-slate-500">
-                        Allowed: JPG, JPEG, PNG, WEBP. Max size: 70KB (local server limit: {serverPayloadLimitBytes / 1024}KB).
-                      </p>
-                    </label>
-
-                    {isReadingImage && (
-                      <div className="rounded-xl border border-sky-500/40 bg-sky-500/10 px-4 py-3 text-sm text-sky-200">
-                        Processing image...
-                      </div>
-                    )}
-
-                    {imageError && (
-                      <div className="rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-                        {imageError}
-                      </div>
-                    )}
-
-
-                    {/* clear selected image */}
-                    {selectedImage && (
-                      <div className="rounded-2xl border border-slate-700 bg-slate-800/70 p-3">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-                          <img
-                            alt="Attachment preview"
-                            className="h-28 w-full rounded-xl border border-slate-700 object-cover sm:w-40"
-                            src={selectedImage.dataUrl}
-                          />
-                          <div className="flex-1">
-                            <p className="text-sm font-semibold text-slate-200">
-                              {selectedImage.fileName}
-                            </p>
-                            <p className="mt-1 text-xs text-slate-400">
-                              {selectedImage.mimeType} • {formatFileSize(selectedImage.size)}
-                            </p>
-                            <button
-                              className="mt-3 cursor-pointer rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-slate-700"
-                              onClick={clearImage}
-                              type="button"
-                            >
-                              Remove image
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {submissionFeedback.type !== "idle" && (
-                      <div className={feedbackClassName}>{submissionFeedback.message}</div>
-                    )}
-
-                    <div className="flex flex-wrap gap-3">
-                      <button
-                        className={`rounded-xl px-6 py-3 text-sm font-semibold text-white transition ${
-                          isSubmitting || isReadingImage
-                            ? "cursor-not-allowed bg-indigo-500/60"
-                            : "bg-indigo-600 hover:-translate-y-0.5 hover:bg-indigo-500 cursor-pointer"
-                        }`}
-                        disabled={isSubmitting || isReadingImage}
-                        type="submit"
-                      >
-                        {isSubmitting
-                          ? "Submitting..."
-                          : isReadingImage
-                          ? "Processing image..."
-                          : "Submit Complaint"}
-                      </button>
-
-                      <button
-                        className="rounded-xl border border-slate-700 bg-slate-800 px-6 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-700 cursor-pointer"
-                        onClick={resetForm}
-                        type="button"
-                      >
-                        Reset Form
-                      </button>
-                    </div>
-                  </form>
-                </div>
-                {/* form submit guidance section */}
-                <aside className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-2xl shadow-black/30">
-                  <h3 className="text-lg font-bold text-white">Before you submit</h3>
-                  <p className="mt-2 text-sm text-slate-400">
-                    Quick tips to help staff resolve your complaint sooner.
-                  </p>
-                  <ul className="mt-4 space-y-3 text-sm text-slate-200">
-                    <li className="rounded-xl border border-slate-800 bg-slate-800/70 p-3">
-                      Use a specific title that summarizes the issue.
-                    </li>
-                    <li className="rounded-xl border border-slate-800 bg-slate-800/70 p-3">
-                      Include dates, locations, and relevant names in the description.
-                    </li>
-                    <li className="rounded-xl border border-slate-800 bg-slate-800/70 p-3">
-                      Choose the right category to route the complaint correctly.
-                    </li>
-                  </ul>
-                  <div className="mt-5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-3 text-xs text-indigo-100">
-                    Tip: You can track updates after submission from the Track Status tab.
-                  </div>
-                </aside>
-              </div>
-            </section>
-          )}
-
-          {/* active section */}
-
-          {activeSection === "history" && (
-             <div>
-                {loading &&<p className="text-gray-400">Loading your complaints...</p>}
-                <h2 className="text-2xl font-bold mb-6">
-                Complaint History
-                </h2>
-
-                {complaints.length === 0 ? (
-                <p className="text-gray-400">
-                    You have not submitted any complaints yet.
-                </p>
-                ) : (
-                <div className="space-y-4">
-                    {complaints.map((complaint) => (
-                    <div
-                        key={complaint.id}
-                        className="bg-gray-900 border border-gray-800 p-5 rounded-xl">
-                        <div className="flex justify-between items-center mb-2">
-                            <h3 className="text-lg font-semibold">
-                                {complaint.title}
-                            </h3>
-
-                            <span
-                                className={`px-3 py-1 text-sm rounded-full ${
-                                complaint.status === "pending"
-                                    ? "bg-yellow-600"
-                                    : complaint.status === "in-progress"
-                                    ? "bg-blue-600"
-                                    : "bg-green-600"
-                                }`}>
-                                {complaint.status}
-                            </span>
-                        </div>
-
-                        <p className="text-gray-400 mb-3">
-                                 {complaint.description}
-                        </p>
-
-                        {(complaint.attachment?.dataUrl || complaint.attachment?.url) && (
-                          <div className="mb-3">
-                            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                              Attached Image
-                            </p>
-                            <a
-                              className="inline-block"
-                              href={complaint.attachment?.dataUrl || complaint.attachment?.url}
-                              rel="noreferrer"
-                              target="_blank"
-                              title="Open image in new tab"
-                            >
-                              <img
-                                alt={`Attachment for ${complaint.title}`}
-                                className="h-36 w-full max-w-sm rounded-xl border border-slate-700 object-cover transition hover:opacity-90"
-                                src={complaint.attachment?.dataUrl || complaint.attachment?.url}
-                              />
-                            </a>
-                            <p className="mt-2 text-xs text-slate-400">
-                              {complaint.attachment?.fileName || "image-attachment"}
-                            </p>
-                          </div>
-                        )}
-
-                        <div className="text-sm text-gray-500">
-                            Category: {complaint.category} | 
-                            Submitted: {new Date(complaint.createdAt).toLocaleString()}
-                        </div>
-                    </div>
-                    ))}
-                </div>
-                )}
-             </div>
-            )}
-
-            {/* complaint track section */}
-
-          {activeSection === "track" &&
-            renderPlaceholderSection(
-              "Track Complaint Status",
-              "Live updates, assigned office, and resolution progress will appear in this section."
-            )}
-
-            {/* chatbot section */}
-
-          {activeSection === "chatbot" &&
-            renderPlaceholderSection(
-              "Ask the Support Chatbot",
-              "Ask questions about complaint categories, expected timelines, and process guidance."
-            )}
+        {/* Main Content Area */}
+        <main className="p-8">
+          {activeSection === "dashboard" && renderDashboard()}
+          {activeSection === "submit" && renderSubmitComplaint()}
+          {activeSection === "history" && renderHistory()}
+          {activeSection === "track" && renderTrackProgress()}
         </main>
       </div>
+
+      {/* Chatbot Panel */}
+      <ChatbotPanel isOpen={isChatbotOpen} onClose={() => setIsChatbotOpen(false)} />
+
+      {/* Track Progress Modal (for history view) */}
+      <Modal
+        isOpen={isTrackModalOpen}
+        onClose={() => setIsTrackModalOpen(false)}
+        title="Track Progress"
+        size="lg"
+      >
+        {selectedComplaint && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">{selectedComplaint.title}</h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Ticket #{selectedComplaint.id} • {selectedComplaint.category}
+                </p>
+              </div>
+              <StatusBadge status={selectedComplaint.status} />
+            </div>
+
+            <ProgressTracker complaint={selectedComplaint} />
+
+            {selectedComplaint.attachment?.dataUrl && (
+              <div>
+                <p className="text-xs font-medium text-gray-500 mb-2">ATTACHMENT</p>
+                <img
+                  src={selectedComplaint.attachment.dataUrl}
+                  alt="Attachment"
+                  className="h-32 w-auto rounded-lg border border-gray-200"
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
+
+      {/* Animation Styles */}
+      <style jsx>{`
+        @keyframes slideIn {
+          from {
+            transform: translateX(100%);
+          }
+          to {
+            transform: translateX(0);
+          }
+        }
+        .animate-slideIn {
+          animation: slideIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out;
+        }
+      `}</style>
     </div>
   );
 }
