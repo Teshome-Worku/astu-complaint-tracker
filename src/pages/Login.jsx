@@ -149,8 +149,8 @@ function Login() {
   return (
     <div className="safe-area-pt safe-area-pb relative flex min-h-screen items-center justify-center overflow-hidden bg-gray-950 p-4 sm:p-6">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-44 -right-40 h-[420px] w-[420px] rounded-full bg-indigo-500/25 blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-44 -left-40 h-[420px] w-[420px] rounded-full bg-purple-500/20 blur-3xl animate-pulse"></div>
+        <div className="absolute -top-44 -right-40 h-105 w-105 rounded-full bg-indigo-500/25 blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-44 -left-40 h-105 w-105 rounded-full bg-purple-500/20 blur-3xl animate-pulse"></div>
       </div>
 
       <div className="animate-slide-in-up relative w-full max-w-sm transform transition-all duration-500">
