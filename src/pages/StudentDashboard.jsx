@@ -1,6 +1,8 @@
 import axios from "axios";
 import { useEffect, useRef, useState,useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { COMPLAINT_STATUS } from "../constants/complaintStatus";
+import { API_BASE_URL } from "../constants/api";
 
 // Reusable Components
 const Card = ({ children, className = "" }) => (
@@ -113,10 +115,10 @@ const StatusBadge = ({ status }) => {
   };
 
   const labels = {
-    pending: "Pending",
-    "in-progress": "In Progress",
-    resolved: "Resolved",
-    assigned: "Assigned",
+    pending: COMPLAINT_STATUS.PENDING,
+    "in-progress": COMPLAINT_STATUS.IN_PROGRESS,
+    resolved: COMPLAINT_STATUS.RESOLVED,
+    assigned: COMPLAINT_STATUS.ASSIGNED,
   };
 
   return (
@@ -129,10 +131,10 @@ const StatusBadge = ({ status }) => {
 // progress tracker component with stepper UI and remarks display
 const ProgressTracker = ({ complaint }) => {
   const steps = [
-    { status: "pending", label: "Submitted", description: "Your complaint has been received" },
-    { status: "assigned", label: "Assigned", description: "Assigned to relevant department" },
-    { status: "in-progress", label: "In Progress", description: "Staff is working on it" },
-    { status: "resolved", label: "Resolved", description: "Issue has been resolved" },
+    { status: COMPLAINT_STATUS.PENDING, label: "Submitted", description: "Your complaint has been received" },
+    { status: COMPLAINT_STATUS.ASSIGNED, label: "Assigned", description: "Assigned to relevant department" },
+    { status: COMPLAINT_STATUS.IN_PROGRESS, label: "In Progress", description: "Staff is working on it" },
+    { status: COMPLAINT_STATUS.RESOLVED, label: "Resolved", description: "Issue has been resolved" },
   ];
 
   const currentStepIndex = steps.findIndex(step => step.status === complaint?.status);
@@ -546,7 +548,7 @@ function StudentDashboard() {
   const fetchAllComplaints = useCallback(async () => {
     if (!user?.id) return;
     try {
-      const res = await axios.get(`http://localhost:5000/complaints?userId=${user.id}`);
+      const res = await axios.get(`${API_BASE_URL}/complaints?userId=${user.id}`);
       setComplaints(res.data);
     } catch (error) {
       console.error("Failed to fetch complaints", error);
@@ -577,7 +579,7 @@ function StudentDashboard() {
       if (!user?.id) return;
       setLoading(true);
       try {
-        const res = await axios.get(`http://localhost:5000/complaints?userId=${user.id}`);
+        const res = await axios.get(`${API_BASE_URL}/complaints?userId=${user.id}`);
         setComplaints(res.data);
       } catch (error) {
         console.error("Failed to fetch complaints", error);
@@ -715,10 +717,10 @@ function StudentDashboard() {
     setSubmissionFeedback({ type: "idle", message: "" });
 
     try {
-      await axios.post("http://localhost:5000/complaints", {
+      await axios.post(`${API_BASE_URL}/complaints`, {
         ...complaintData,
         userId: user.id,
-        status: "pending",
+        status: COMPLAINT_STATUS.PENDING,
         assignedDepartment: null,
         assignedTo: null,
         assignedStaffId: null,
