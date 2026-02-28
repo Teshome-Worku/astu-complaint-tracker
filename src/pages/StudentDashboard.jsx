@@ -43,64 +43,33 @@ const StatCard = ({ title, value, icon, color = "blue", trend, subtitle }) => {
 const Button = ({ children, variant = "primary", size = "md", onClick, disabled, className = "", ...props }) => {
   const variants = {
     primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
-    secondary: "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-gray-500",
-    danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
-    ghost: "text-gray-600 hover:bg-gray-100 focus:ring-gray-500",
-    outline: "border border-blue-600 text-blue-600 hover:bg-blue-50",
-    success: "bg-green-600 text-white hover:bg-green-700 focus:ring-green-500",
+    secondary: "bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-400",
+    ghost: "bg-transparent text-blue-600 hover:bg-blue-50 focus:ring-blue-400",
   };
 
   const sizes = {
     sm: "px-3 py-1.5 text-sm",
-    md: "px-4 py-2 text-sm",
-    lg: "px-6 py-3 text-base",
+    md: "px-4 py-2 text-base",
+    lg: "px-6 py-3 text-lg",
   };
 
   return (
     <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
       className={`
         inline-flex items-center justify-center font-medium rounded-lg
         transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2
         disabled:opacity-50 disabled:cursor-not-allowed
         ${variants[variant]} ${sizes[size]} ${className}
       `}
-      onClick={onClick}
-      disabled={disabled}
       {...props}
     >
       {children}
     </button>
   );
 };
-
-const Input = ({ label, error, icon, className = "", ...props }) => (
-  <div className="space-y-1.5">
-    {label && (
-      <label className="block text-sm font-medium text-gray-700">
-        {label}
-      </label>
-    )}
-    <div className="relative">
-      {icon && (
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-          {icon}
-        </div>
-      )}
-      <input
-        className={`
-          w-full rounded-lg border border-gray-300 px-4 py-3
-          ${icon ? 'pl-10' : ''}
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-          transition-shadow duration-200
-          ${error ? "border-red-300 focus:ring-red-500" : ""}
-          ${className}
-        `}
-        {...props}
-      />
-    </div>
-    {error && <p className="text-sm text-red-600">{error}</p>}
-  </div>
-);
 
 const TextArea = ({ label, error, showCount = false, maxLength, className = "", ...props }) => {
   const [charCount, setCharCount] = useState(0);
@@ -157,6 +126,7 @@ const StatusBadge = ({ status }) => {
   );
 };
 
+// progress tracker component with stepper UI and remarks display
 const ProgressTracker = ({ complaint }) => {
   const steps = [
     { status: "pending", label: "Submitted", description: "Your complaint has been received" },
@@ -230,6 +200,7 @@ const EmptyState = ({ title, description, icon, action }) => (
   </div>
 );
 
+// modal component with backdrop and close on outside click, also supports different sizes and has a header with title and close button
 const Modal = ({ isOpen, onClose, title, children, size = "md" }) => {
   if (!isOpen) return null;
 
@@ -318,6 +289,8 @@ const ChatbotPanel = ({ isOpen, onClose }) => {
     }, 1500);
   };
 
+
+  //  chatbot response
   const getBotResponse = (message) => {
     const lowerMessage = message.toLowerCase();
     if (lowerMessage.includes("submit") || lowerMessage.includes("complaint")) {
@@ -347,9 +320,11 @@ const ChatbotPanel = ({ isOpen, onClose }) => {
             </div>
             <div>
               <h3 className="font-semibold text-white">AI Assistant</h3>
-              <p className="text-xs text-blue-100">Online • Ready to help</p>
+              <p className="text-xs text-blue-100"><span className="inline-block w-2 h-2 bg-green-400 rounded-full mr-1"></span>
+                Online • Ready to help</p>
             </div>
           </div>
+          {/* close button which is 'X'*/}
           <button
             onClick={onClose}
             className="text-white/80 hover:text-white transition-colors"
@@ -360,7 +335,7 @@ const ChatbotPanel = ({ isOpen, onClose }) => {
           </button>
         </div>
       </div>
-
+      {/* content body */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
         {messages.map((message) => (
           <div
@@ -394,7 +369,7 @@ const ChatbotPanel = ({ isOpen, onClose }) => {
         )}
         <div ref={messagesEndRef} />
       </div>
-
+        {/* quick actions part-bottom  */}
       <div className="p-4 border-t border-gray-200 bg-white">
         <p className="text-xs font-medium text-gray-500 mb-2">QUICK ACTIONS</p>
         <div className="grid grid-cols-2 gap-2">
@@ -413,7 +388,8 @@ const ChatbotPanel = ({ isOpen, onClose }) => {
           ))}
         </div>
       </div>
-
+      
+      {/* input text section */}
       <div className="p-4 border-t border-gray-200 bg-white">
         <div className="flex items-center space-x-2">
           <input
@@ -562,6 +538,9 @@ function StudentDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [, setIsNotificationsOpen] = useState(false);
 
   // Fetch all complaints for dashboard
   const fetchAllComplaints = useCallback(async () => {
@@ -578,6 +557,19 @@ function StudentDashboard() {
   useEffect(() => {
     fetchAllComplaints();
   }, [fetchAllComplaints]);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    if (isSidebarOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = previousOverflow || "";
+    }
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isSidebarOpen]);
 
   // Fetch complaints based on section
   useEffect(() => {
@@ -609,6 +601,11 @@ function StudentDashboard() {
 
   // Logout
   const handleLogout = () => {
+    setIsLogoutModalOpen(true);
+  };
+
+  const confirmLogout = () => {
+    setIsLogoutModalOpen(false);
     localStorage.removeItem("user");
     navigate("/login");
   };
@@ -634,6 +631,7 @@ function StudentDashboard() {
     }
   };
 
+  // handling image selection with validation for type, size, and encoded data URL size
   const handleImageChange = async (event) => {
     const file = event.target.files?.[0];
     setImageError("");
@@ -700,6 +698,7 @@ function StudentDashboard() {
     setSubmissionFeedback({ type: "idle", message: "" });
   };
 
+  // complaint submit handling
   const handleComplaintSubmit = async (event) => {
     event.preventDefault();
     if (isSubmitting || isReadingImage) return;
@@ -766,7 +765,12 @@ function StudentDashboard() {
     setIsTrackModalOpen(true);
   };
 
-  // Filter complaints
+  const handleSidebarNavigation = (sectionId) => {
+    setActiveSection(sectionId);
+    setIsSidebarOpen(false);
+  };
+
+  // Filter complaints by search term in title, description, or category
   const filteredComplaints = complaints.filter(complaint =>
     complaint.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     complaint.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -801,7 +805,7 @@ function StudentDashboard() {
     },
   ];
 
-  // Render functions for each section
+  // Render functions for dashboard section
   const renderDashboard = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -913,7 +917,7 @@ function StudentDashboard() {
       </Card>
     </div>
   );
-
+  //  render submit complaint form with image upload and validation
   const renderSubmitComplaint = () => (
     <div className="max-w-4xl mx-auto">
       <Card>
@@ -927,7 +931,7 @@ function StudentDashboard() {
 
         <form onSubmit={handleComplaintSubmit} className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Input
+            <input
               label="Title"
               placeholder="e.g., Issue with hostel WiFi"
               name="title"
@@ -943,6 +947,7 @@ function StudentDashboard() {
               </label>
               <select
                 name="category"
+                required
                 value={complaintData.category}
                 onChange={handleComplaintChange}
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -1091,7 +1096,7 @@ function StudentDashboard() {
       </Card>
     </div>
   );
-
+  // render history section with search and track progress button for each complaint
   const renderHistory = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -1166,7 +1171,7 @@ function StudentDashboard() {
       )}
     </div>
   );
-
+  // render track progress section with complaint details and progress tracker component
   const renderTrackProgress = () => (
     <div className="space-y-6">
       <h2 className="text-2xl font-semibold text-gray-900">Track Complaint Progress</h2>
@@ -1256,22 +1261,23 @@ function StudentDashboard() {
     </div>
   );
 
+  // rendering the page starts from here
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
-      <aside className="fixed left-0 top-0 h-screen w-72 bg-white border-r border-gray-200 flex flex-col">
-        <div className="p-6 border-b border-gray-200">
+      <aside className="fixed left-0 top-0 h-screen w-72 bg-linear-to-b from-blue-950 via-blue-900 to-slate-900 border-r border-blue-900/40 flex flex-col shadow-[6px_0_24px_rgba(2,6,23,0.32)]">
+        <div className="p-6 border-b border-white/15">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-linear-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
               <span className="text-white font-bold text-xl">A</span>
             </div>
             <div>
-              <h1 className="font-semibold text-gray-900">ASTU Tracker</h1>
-              <p className="text-xs text-gray-500">Student Dashboard</p>
+              <h1 className="font-semibold text-white">ASTU Complaint Tracker</h1>
+              <p className="text-xs text-blue-200/90">Student Dashboard</p>
             </div>
           </div>
         </div>
-
+        {/* sidebar navigation items */}
         <nav className="flex-1 p-4 space-y-1">
           {navigationItems.map((item) => {
             const Icon = item.icon;
@@ -1285,48 +1291,48 @@ function StudentDashboard() {
                   w-full flex items-center space-x-3 px-4 py-3 rounded-xl
                   transition-all duration-200 group relative
                   ${isActive
-                    ? "bg-linear-to-r from-blue-50 to-indigo-50 text-blue-600"
-                    : "text-gray-600 hover:bg-gray-50"
+                    ? "bg-blue-500/25 text-white ring-1 ring-cyan-300/35"
+                    : "text-blue-100/90 hover:bg-white/10 hover:text-white"
                   }
                 `}
               >
                 <Icon className={`w-5 h-5 ${
-                  isActive ? "text-blue-600" : "text-gray-400 group-hover:text-gray-500"
+                  isActive ? "text-cyan-100" : "text-blue-200/90 group-hover:text-white"
                 }`} />
                 <div className="text-left">
                   <span className="text-sm font-medium block">{item.label}</span>
-                  <span className={`text-xs ${isActive ? "text-blue-400" : "text-gray-400"}`}>
+                  <span className={`text-xs ${isActive ? "text-cyan-100/85" : "text-blue-200/70"}`}>
                     {item.helper}
                   </span>
                 </div>
                 {isActive && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-blue-600 rounded-r-full" />
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-cyan-300 rounded-r-full" />
                 )}
               </button>
             );
           })}
         </nav>
-
-        <div className="p-4 border-t border-gray-200 space-y-2">
+          {/* chatbot and logout buttons at the bottom of sidebar */}
+        <div className="p-4 border-t border-blue-900/30 space-y-2">
           <button
             onClick={() => setIsChatbotOpen(true)}
-            className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group"
+            className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-blue-100/90 hover:bg-white/10 hover:text-white transition-all duration-200 group"
           >
-            <ChatIcon className="w-5 h-5 text-gray-400 group-hover:text-blue-600" />
+            <ChatIcon className="w-5 h-5 text-blue-200/90 group-hover:text-white" />
             <div className="text-left">
               <span className="text-sm font-medium block">Ask Assistant</span>
-              <span className="text-xs text-gray-400">Get help & guidance</span>
+              <span className="text-xs text-blue-200/70">Get help & guidance</span>
             </div>
           </button>
 
           <button
             onClick={handleLogout}
-            className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all duration-200 group"
+            className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-100/90 hover:bg-white/10 hover:text-white transition-all duration-200 group"
           >
-            <LogoutIcon className="w-5 h-5 text-gray-400 group-hover:text-red-600" />
+            <LogoutIcon className="w-5 h-5 text-red-200 group-hover:text-white" />
             <div className="text-left">
               <span className="text-sm font-medium block">Logout</span>
-              <span className="text-xs text-gray-400">End session</span>
+              <span className="text-xs text-red-100/70">End session</span>
             </div>
           </button>
         </div>
@@ -1346,11 +1352,12 @@ function StudentDashboard() {
                   {navigationItems.find(item => item.id === activeSection)?.helper}
                 </p>
               </div>
-
+              {/* notification and user profile section */}
               <div className="flex items-center space-x-6">
-                <button className="relative p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
+                <button className="relative p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => setIsNotificationsOpen(true)}>
                   <NotificationIcon className="w-6 h-6" />
                   <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+
                 </button>
 
                 <div className="flex items-center space-x-3">
@@ -1414,6 +1421,34 @@ function StudentDashboard() {
             )}
           </div>
         )}
+      </Modal>
+        {/* logout confirmation modal */}
+      <Modal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        title="Confirm Logout"
+        size="sm"
+      >
+        <div className="space-y-5">
+          <p className="text-sm text-gray-600">
+            Are you sure you want to log out from the student dashboard?
+          </p>
+          <div className="flex items-center justify-end gap-3">
+            <Button
+              variant="secondary"
+              onClick={() => setIsLogoutModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <button
+              type="button"
+              onClick={confirmLogout}
+              className="inline-flex items-center justify-center rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
       </Modal>
 
       {/* Animation Styles */}
