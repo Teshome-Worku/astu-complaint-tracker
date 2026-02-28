@@ -17,10 +17,6 @@ const sidebarItems = [
 ];
 
 const sidebarLogoCandidates = [
-  // "/astu-complaint-tracker.png",
-  // "/astu-complaint-logo.png",
-  // "/astu-logo.png",
-  // "/logo.png",
   "/favicon.svg",
 ];
 
