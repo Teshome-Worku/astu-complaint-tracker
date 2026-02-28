@@ -14,10 +14,10 @@ const sidebarItems = [
 ];
 
 const sidebarLogoCandidates = [
-  "/astu-complaint-tracker.png",
-  "/astu-complaint-logo.png",
-  "/astu-logo.png",
-  "/logo.png",
+  // "/astu-complaint-tracker.png",
+  // "/astu-complaint-logo.png",
+  // "/astu-logo.png",
+  // "/logo.png",
   "/favicon.svg",
 ];
 
@@ -862,6 +862,7 @@ function AdminDashboard() {
     navigate("/login");
   };
 
+  // rendering complaints 
   const renderManagementList = () => {
     if (isLoading) {
       return <p className="text-slate-500">Loading complaints...</p>;
