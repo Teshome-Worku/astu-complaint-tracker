@@ -841,7 +841,7 @@ function StudentDashboard() {
 
       {/* Recent Activity */}
       <Card>
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
           <Button
             variant="ghost"
@@ -919,17 +919,17 @@ function StudentDashboard() {
   );
   //  render submit complaint form with image upload and validation
   const renderSubmitComplaint = () => (
-    <div className="max-w-4xl mx-auto">
+    <div className="mx-auto w-full max-w-4xl">
       <Card>
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold text-gray-900">Submit a New Complaint</h2>
+          <h2 className="text-xl font-semibold text-gray-900 sm:text-2xl">Submit a New Complaint</h2>
           <p className="text-sm text-gray-500 mt-2">
             Please provide detailed information about your issue. The more specific you are, 
             the faster we can help resolve it.
           </p>
         </div>
 
-        <form onSubmit={handleComplaintSubmit} className="space-y-8">
+        <form onSubmit={handleComplaintSubmit} className="space-y-6 sm:space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <input
               label="Title"
@@ -1006,7 +1006,7 @@ function StudentDashboard() {
 
           {selectedImage && (
             <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-              <div className="flex items-start space-x-4">
+              <div className="flex flex-col items-start gap-3 sm:flex-row sm:gap-4">
                 <img
                   src={selectedImage.dataUrl}
                   alt="Preview"
@@ -1065,13 +1065,13 @@ function StudentDashboard() {
             </div>
           )}
 
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <Button
               type="submit"
               variant="primary"
               size="lg"
               disabled={isSubmitting || isReadingImage}
-              className="min-w-50"
+              className="w-full sm:w-auto"
             >
               {isSubmitting ? (
                 <span className="flex items-center">
@@ -1088,6 +1088,7 @@ function StudentDashboard() {
               variant="secondary"
               size="lg"
               onClick={resetForm}
+              className="w-full sm:w-auto"
             >
               Reset Form
             </Button>
@@ -1099,16 +1100,16 @@ function StudentDashboard() {
   // render history section with search and track progress button for each complaint
   const renderHistory = () => (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-gray-900">Complaint History</h2>
-        <div className="relative">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-xl font-semibold text-gray-900 sm:text-2xl">Complaint History</h2>
+        <div className="relative w-full sm:w-auto">
           <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
             placeholder="Search complaints..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg w-80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full rounded-lg border border-gray-200 py-2 pl-10 pr-4 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 sm:w-80"
           />
         </div>
       </div>
@@ -1136,9 +1137,9 @@ function StudentDashboard() {
         <div className="grid gap-4">
           {filteredComplaints.map((complaint) => (
             <Card key={complaint.id} className="hover:shadow-md transition-all cursor-pointer" onClick={() => handleTrackProgress(complaint)}>
-              <div className="flex items-start justify-between">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
+                  <div className="mb-2 flex flex-wrap items-center gap-2 sm:gap-3">
                     <h3 className="text-lg font-semibold text-gray-900">{complaint.title}</h3>
                     <StatusBadge status={complaint.status} />
                   </div>
@@ -1147,7 +1148,7 @@ function StudentDashboard() {
                   </p>
                   <p className="text-gray-600 text-sm mb-4 line-clamp-2">{complaint.description}</p>
                   
-                  <div className="flex items-center space-x-4 text-xs text-gray-400">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-gray-400 sm:gap-4">
                     <span>Submitted: {new Date(complaint.createdAt).toLocaleString()}</span>
                     {complaint.remarks && <span>• Has staff remarks</span>}
                     {complaint.attachment && <span>• Has attachment</span>}
@@ -1160,7 +1161,7 @@ function StudentDashboard() {
                     e.stopPropagation();
                     handleTrackProgress(complaint);
                   }}
-                  className="ml-4"
+                  className="w-full sm:ml-4 sm:w-auto"
                 >
                   Track Progress
                 </Button>
@@ -1174,7 +1175,7 @@ function StudentDashboard() {
   // render track progress section with complaint details and progress tracker component
   const renderTrackProgress = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-gray-900">Track Complaint Progress</h2>
+      <h2 className="text-xl font-semibold text-gray-900 sm:text-2xl">Track Complaint Progress</h2>
       
       {loading ? (
         <div className="flex justify-center py-12">
@@ -1207,7 +1208,7 @@ function StudentDashboard() {
                 }`}
                 onClick={() => setSelectedComplaint(complaint)}
               >
-                <div className="flex items-start justify-between mb-2">
+                <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
                   <h4 className="text-sm font-medium text-gray-900">{complaint.title}</h4>
                   <StatusBadge status={complaint.status} />
                 </div>
