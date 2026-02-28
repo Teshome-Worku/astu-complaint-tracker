@@ -9,10 +9,11 @@
         "lint": "eslint .",
         "preview": "vite preview",
         "server": "json-server --watch db.json --port 5000",
-        "start": "json-server --watch db.json --port 10000 --host 0.0.0.0"
+        "start": "node server.js"
     },
     "dependencies": {
         "axios": "^1.13.5",
+        "cors": "^2.8.6",
         "json-server": "^1.0.0-beta.12",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
