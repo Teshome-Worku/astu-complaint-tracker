@@ -198,8 +198,7 @@ function AdminSidebar({ activeItemId, isMobileOpen, onClose, onLogout, onSelectI
       {isMobileOpen && (
         <button
           aria-label="Close sidebar overlay"
-          className="fixed inset-0 z-40 bg-slate-950/55 lg:hidden"
-          onClick={onClose}
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
           type="button"
         />
       )}
@@ -303,6 +302,10 @@ function AdminDashboard() {
   const [staffUsers, setStaffUsers] = useState([]);
   const [studentUsers, setStudentUsers] = useState([]);
   const [usersView, setUsersView] = useState("staff");
+  const [editingUser, setEditingUser] = useState(null);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [assignmentDrafts, setAssignmentDrafts] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [notificationTargetComplaintId, setNotificationTargetComplaintId] = useState("");
@@ -559,6 +562,57 @@ function AdminDashboard() {
     }
   };
 
+  // save edited user to backend and update local state
+  const handleSaveUser = async () => {
+    if (!editingUser) return;
+    setUpdatingId(editingUser.id);
+    setError("");
+    try {
+      const payload = {
+        name: editingUser.name,
+        email: editingUser.email,
+        department: editingUser.department,
+        role: editingUser.role,
+      };
+      const res = await axios.patch(`http://localhost:5000/users/${editingUser.id}`, payload);
+      const updated = res?.data || editingUser;
+      if (editingUser.role === "staff") {
+        setStaffUsers((prev) => prev.map((u) => (String(u.id) === String(updated.id) ? updated : u)));
+      } else {
+        setStudentUsers((prev) => prev.map((u) => (String(u.id) === String(updated.id) ? updated : u)));
+      }
+      setIsUserModalOpen(false);
+      setEditingUser(null);
+    } catch (err) {
+      console.error("Failed to save user", err);
+      setError("Failed to save user. Please try again.");
+    } finally {
+      setUpdatingId("");
+    }
+  };
+
+  // delete user from backend and update local state
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+    setUpdatingId(userToDelete.id);
+    setError("");
+    try {
+      await axios.delete(`http://localhost:5000/users/${userToDelete.id}`);
+      if (userToDelete.role === "staff") {
+        setStaffUsers((prev) => prev.filter((u) => String(u.id) !== String(userToDelete.id)));
+      } else {
+        setStudentUsers((prev) => prev.filter((u) => String(u.id) !== String(userToDelete.id)));
+      }
+      setIsDeleteConfirmOpen(false);
+      setUserToDelete(null);
+    } catch (err) {
+      console.error("Failed to delete user", err);
+      setError("Failed to delete user. Please try again.");
+    } finally {
+      setUpdatingId("");
+    }
+  };
+
   const sortedComplaints = useMemo(
     () =>
       [...complaints].sort(
@@ -567,6 +621,7 @@ function AdminDashboard() {
     [complaints]
   );
 
+  // calculation on complaint metrics for dashboard summary and charts
   const metrics = useMemo(() => {
     const total = complaints.length;
     const resolved = complaints.filter((complaint) => complaint.status === "resolved").length;
@@ -1163,6 +1218,7 @@ function AdminDashboard() {
 
             {/* dashboard section */}
           {activeSidebarItem === "dashboard" && (
+            // total complaints and resolution section, followed by charts and recent complaints 
             <>
               <section className="grid gap-4 lg:grid-cols-3">
                 <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -1184,7 +1240,7 @@ function AdminDashboard() {
                   </p>
                 </article>
               </section>
-
+              {/* bar and pie charts section */}
               <section className="grid gap-4 lg:grid-cols-2">
                 <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                   <h3 className="text-lg font-bold text-slate-800">Complaint Volume by Status</h3>
@@ -1249,7 +1305,7 @@ function AdminDashboard() {
                   )}
                 </article>
               </section>
-
+                  {/* recent complaints section with search term display and fallback messages */}
               <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="mb-4 flex items-center justify-between gap-2">
                   <h2 className="text-2xl font-black text-slate-800">Recent Complaints</h2>
@@ -1414,7 +1470,8 @@ function AdminDashboard() {
                             <th className="pb-2 pr-4 font-semibold">ID</th>
                             <th className="pb-2 pr-4 font-semibold">Name</th>
                             <th className="pb-2 pr-4 font-semibold">Email</th>
-                            <th className="pb-2 font-semibold">Department</th>
+                              <th className="pb-2 pr-4 font-semibold">Department</th>
+                              <th className="pb-2 font-semibold">Actions</th>
                           </tr>
                         </thead>
                         <tbody className="text-slate-700">
@@ -1424,6 +1481,30 @@ function AdminDashboard() {
                               <td className="py-2 pr-4">{staff.name}</td>
                               <td className="py-2 pr-4">{staff.email}</td>
                               <td className="py-2">{staff.department || "Not set"}</td>
+                              <td className="py-2 pr-4">
+                                <div className="inline-flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingUser({ ...staff, role: "staff" });
+                                      setIsUserModalOpen(true);
+                                    }}
+                                    className="rounded-md bg-blue-600 px-2 py-1 text-xs font-semibold text-white hover:bg-blue-500"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setUserToDelete({ id: staff.id, role: "staff" });
+                                      setIsDeleteConfirmOpen(true);
+                                    }}
+                                    className="rounded-md bg-rose-600 px-2 py-1 text-xs font-semibold text-white hover:bg-rose-500"
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -1451,6 +1532,30 @@ function AdminDashboard() {
                               <td className="py-2 pr-4">{s.name}</td>
                               <td className="py-2 pr-4">{s.email}</td>
                               <td className="py-2">{s.department || "N/A"}</td>
+                              <td className="py-2 pr-4">
+                                <div className="inline-flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingUser({ ...s, role: "student" });
+                                      setIsUserModalOpen(true);
+                                    }}
+                                    className="rounded-md bg-blue-600 px-2 py-1 text-xs font-semibold text-white hover:bg-blue-500"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setUserToDelete({ id: s.id, role: "student" });
+                                      setIsDeleteConfirmOpen(true);
+                                    }}
+                                    className="rounded-md bg-rose-600 px-2 py-1 text-xs font-semibold text-white hover:bg-rose-500"
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -1622,6 +1727,101 @@ function AdminDashboard() {
       </div>
 
       {/* logout confirmation modal */}
+
+      {isUserModalOpen && editingUser && (
+        <div
+          aria-modal="true"
+          className="fixed inset-0 z-70 flex items-center justify-center bg-slate-950/60 p-4"
+          role="dialog"
+        >
+          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <h3 className="text-xl font-bold text-slate-800">Edit User</h3>
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">Name</label>
+                <input
+                  value={editingUser.name || ""}
+                  onChange={(e) => setEditingUser((u) => ({ ...u, name: e.target.value }))}
+                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">Email</label>
+                <input
+                  value={editingUser.email || ""}
+                  onChange={(e) => setEditingUser((u) => ({ ...u, email: e.target.value }))}
+                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">Department</label>
+                <input
+                  value={editingUser.department || ""}
+                  onChange={(e) => setEditingUser((u) => ({ ...u, department: e.target.value }))}
+                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsUserModalOpen(false);
+                  setEditingUser(null);
+                }}
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveUser}
+                disabled={updatingId === (editingUser?.id ?? "")}
+                className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition ${
+                  updatingId === (editingUser?.id ?? "") ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-500"
+                }`}
+              >
+                {updatingId === (editingUser?.id ?? "") ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isDeleteConfirmOpen && userToDelete && (
+        <div
+          aria-modal="true"
+          className="fixed inset-0 z-70 flex items-center justify-center bg-slate-950/60 p-4"
+          role="dialog"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <h3 className="text-xl font-bold text-slate-800">Confirm Delete</h3>
+            <p className="mt-2 text-sm text-slate-600">Are you sure you want to delete this user?</p>
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsDeleteConfirmOpen(false);
+                  setUserToDelete(null);
+                }}
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteUser}
+                disabled={updatingId === (userToDelete?.id ?? "")}
+                className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition ${
+                  updatingId === (userToDelete?.id ?? "") ? "bg-rose-400" : "bg-rose-600 hover:bg-rose-500"
+                }`}
+              >
+                {updatingId === (userToDelete?.id ?? "") ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isLogoutModalOpen && (
         <div

@@ -15,13 +15,6 @@
       "role": "student"
     },
     {
-      "id": "686e",
-      "name": "Teshe",
-      "email": "tesheworku1251@gmail.com",
-      "password": "@iPj95Nh6S8CM32",
-      "role": "student"
-    },
-    {
       "id": "5cf8",
       "name": "Teshe",
       "email": "teshome.worku@astu.edu.et",
@@ -350,7 +343,7 @@
       "title": "internet is not working",
       "description": "internet in the applied library is not working since last week",
       "category": "IT",
-      "userId": "686e",
+      "userId": null,
       "status": "in-progress",
       "assignedDepartment": "IT",
       "assignedTo": "it1",
