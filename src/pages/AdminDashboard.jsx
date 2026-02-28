@@ -49,6 +49,7 @@ function toTitleCase(value) {
     .join(" ");
 }
 
+// sidebar icons are defined here for better organization and to avoid cluttering the main component with SVG code
 function getSidebarIcon(id) {
   if (id === "dashboard") {
     return (
@@ -155,6 +156,8 @@ function getSidebarIcon(id) {
   );
 }
 
+
+// sidebar items
 function SidebarItem({ item, isActive, onSelect }) {
   return (
     <button
@@ -180,6 +183,8 @@ function SidebarItem({ item, isActive, onSelect }) {
   );
 }
 
+
+// sidebar logic and main dashboard component
 function AdminSidebar({ activeItemId, isMobileOpen, onClose, onLogout, onSelectItem }) {
   const [logoIndex, setLogoIndex] = useState(0);
   const logoSrc = sidebarLogoCandidates[Math.min(logoIndex, sidebarLogoCandidates.length - 1)];
@@ -286,6 +291,7 @@ function AdminSidebar({ activeItemId, isMobileOpen, onClose, onLogout, onSelectI
   );
 }
 
+// main dashboard component
 function AdminDashboard() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
@@ -295,6 +301,7 @@ function AdminDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [complaints, setComplaints] = useState([]);
   const [staffUsers, setStaffUsers] = useState([]);
+  const [studentUsers, setStudentUsers] = useState([]);
   const [assignmentDrafts, setAssignmentDrafts] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [notificationTargetComplaintId, setNotificationTargetComplaintId] = useState("");
@@ -439,6 +446,7 @@ function AdminDashboard() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isLogoutModalOpen]);
 
+  // fetching staff users for assignment and user management sections
   useEffect(() => {
     const fetchStaffUsers = async () => {
       try {
@@ -453,6 +461,22 @@ function AdminDashboard() {
     fetchStaffUsers();
   }, []);
 
+  // fetching student users so admin can view/manage students (fetched near staff logic)
+  useEffect(() => {
+    const fetchStudentUsers = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/users");
+        const allUsers = Array.isArray(res.data) ? res.data : [];
+        setStudentUsers(allUsers.filter((entry) => normalize(entry.role) === "student"));
+      } catch {
+        console.error("Failed to fetch student users");
+      }
+    };
+
+    fetchStudentUsers();
+  }, []);
+
+  
   useEffect(() => {
     setAssignmentDrafts((prevDrafts) => {
       const nextDrafts = { ...prevDrafts };
@@ -699,7 +723,9 @@ function AdminDashboard() {
   }, [issueBreakdown]);
 
   const unreadCount = notifications.length;
+  
 
+  //  staff summary calculations
   const userSummary = useMemo(() => {
     const totalUsers = staffUsers.length;
     const staffWithDepartment = staffUsers.filter((staff) => normalize(staff.department)).length;
@@ -1134,6 +1160,7 @@ function AdminDashboard() {
             </div>
           )}
 
+            {/* dashboard section */}
           {activeSidebarItem === "dashboard" && (
             <>
               <section className="grid gap-4 lg:grid-cols-3">
@@ -1285,6 +1312,8 @@ function AdminDashboard() {
             </>
           )}
 
+          {/* complaints management section */}
+
           {activeSidebarItem === "complaints" && (
             <section className="space-y-4">
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -1296,6 +1325,8 @@ function AdminDashboard() {
               {renderManagementList()}
             </section>
           )}
+
+          {/* user management section */}
 
           {activeSidebarItem === "users" && (
             <section className="space-y-4">
@@ -1344,6 +1375,7 @@ function AdminDashboard() {
                           <th className="pb-2 pr-4 font-semibold">Name</th>
                           <th className="pb-2 pr-4 font-semibold">Email</th>
                           <th className="pb-2 font-semibold">Department</th>
+
                         </tr>
                       </thead>
                       <tbody className="text-slate-700">
@@ -1362,6 +1394,8 @@ function AdminDashboard() {
               </div>
             </section>
           )}
+
+          {/* categories section */}
 
           {activeSidebarItem === "categories" && (
             <section className="space-y-4">
@@ -1410,6 +1444,8 @@ function AdminDashboard() {
               )}
             </section>
           )}
+
+          {/* reports section */}
 
           {activeSidebarItem === "reports" && (
             <section className="space-y-4">
@@ -1469,6 +1505,7 @@ function AdminDashboard() {
             </section>
           )}
 
+          {/* settings section */}
           {activeSidebarItem === "settings" && (
             <section className="space-y-4">
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -1516,6 +1553,8 @@ function AdminDashboard() {
           )}
         </main>
       </div>
+
+      {/* logout confirmation modal */}
 
       {isLogoutModalOpen && (
         <div
