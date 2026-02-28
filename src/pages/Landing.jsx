@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-
+import { ROUTES } from "../constants/routes";
 const features = [
   {
     title: "Structured Role Management",
@@ -30,13 +30,13 @@ const SYSTEM_VERSION = "v1.0.0";
 
 const ctaLinks = [
   {
-    to: "/login",
+    to: ROUTES.LOGIN,
     label: "Login",
     className:
       "w-full rounded-full bg-white px-6 py-3 text-center text-sm font-semibold text-indigo-700 shadow-lg shadow-indigo-900/30 transition hover:bg-slate-100 sm:w-auto",
   },
   {
-    to: "/register",
+    to: ROUTES.REGISTER,
     label: "Register",
     className:
       "w-full rounded-full border border-white/80 px-6 py-3 text-center text-sm font-semibold text-white transition hover:bg-white/10 hover:border-white/100 sm:w-auto",

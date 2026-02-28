@@ -48,7 +48,7 @@ export default function AppRoutes() {
       {routes.map((route) => (
         <Route key={route.path} path={route.path} element={route.element} />
       ))}
-      <Route path="*" element={<Navigate replace to="/" />} />
+      <Route path="*" element={<Navigate replace to={ROUTES.HOME} />} />
     </Routes>
   );
 }

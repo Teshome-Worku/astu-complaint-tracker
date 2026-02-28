@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL  } from "../constants/api";
 import { COMPLAINT_STATUS } from "../constants/complaintStatus";
+import {ROUTES} from "../constants/routes";
 
 // Reusable Components
 const Card = ({ children, className = "" }) => (
@@ -364,7 +365,7 @@ function StaffDashboard() {
 
   useEffect(() => {
     if (!currentUser || !isStaff) {
-      navigate("/login", { replace: true });
+      navigate(ROUTES.LOGIN, { replace: true });
     }
   }, [currentUser, isStaff, navigate]);
 
@@ -627,7 +628,7 @@ function StaffDashboard() {
   const confirmLogout = () => {
     setIsLogoutModalOpen(false);
     localStorage.removeItem("user");
-    navigate("/login");
+    navigate(ROUTES.LOGIN, { replace: true });
   };
 
   const renderOverviewSection = () => (

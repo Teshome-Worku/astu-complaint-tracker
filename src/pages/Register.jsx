@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../constants/api";
+import {ROLES} from "../constants/roles";
+import {ROUTES} from "../constants/routes";
 
 function Register() {
   const navigate = useNavigate();
@@ -13,6 +15,8 @@ function Register() {
   });
 
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successToast, setSuccessToast] = useState("");
 
   const handleChange = (e) => {
     setFormData({
@@ -23,7 +27,10 @@ function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
     setError("");
+    setIsSubmitting(true);
 
     try {
       // Check if email already exists
@@ -34,29 +41,44 @@ function Register() {
       if (res.data.length > 0) {
         setError("Email already registered");
         setTimeout(() => setError(""), 3000);
+        setIsSubmitting(false);
         return;
       }
+
+      // check if email is an ASTU email
       if(!formData.email.endsWith("@astu.edu.et")) {
         setError("Only ASTU email addresses are allowed");
         setTimeout(() => setError(""), 3000);
+        setIsSubmitting(false);
         return;
       }
 
       // Create new user with default role
       await axios.post(`${API_BASE_URL}/users`, {
         ...formData,
-        role: "student",
+        role: ROLES.STUDENT,
       });
 
-      // Redirect to login
-      navigate("/login");
-    } catch (err) {
+      setSuccessToast("Registered successfully. Redirecting to login...");
+      setTimeout(() => {
+        setSuccessToast("");
+        navigate(ROUTES.LOGIN);
+      }, 1200);
+    } catch {
       setError("Something went wrong");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div className="safe-area-pt safe-area-pb min-h-screen flex">
+      {successToast && (
+        <div className="fixed top-4 left-1/2 z-50 w-[92%] max-w-md -translate-x-1/2 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 shadow-lg">
+          {successToast}
+        </div>
+      )}
+
       {/* LEFT SIDE */}
       <div className="hidden md:flex w-1/2 bg-linear-to-br from-indigo-700 via-purple-700 to-gray-900 text-white flex-col justify-center items-center p-12 animate-slide-in-up">
         <h1 className="text-4xl font-extrabold mb-6 text-center leading-snug">
@@ -98,6 +120,7 @@ function Register() {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
+                disabled={isSubmitting}
                 required
                 className="w-full px-3.5 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500"
               />
@@ -110,6 +133,7 @@ function Register() {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
+                disabled={isSubmitting}
                 required
                 className="w-full px-3.5 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500"
               />
@@ -122,6 +146,7 @@ function Register() {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
+                disabled={isSubmitting}
                 required
                 className="w-full px-3.5 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500"
               />
@@ -129,15 +154,22 @@ function Register() {
 
             <button
               type="submit"
-              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-sm font-semibold text-white transition duration-300"
+              disabled={isSubmitting}
+              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-70 disabled:cursor-not-allowed rounded-lg text-sm font-semibold text-white transition duration-300 inline-flex items-center justify-center gap-2"
             >
-              Register
+              {isSubmitting && (
+                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+              )}
+              {isSubmitting ? "Registering..." : "Register"}
             </button>
           </form>
 
           <p className="text-gray-400 text-center text-sm mt-5">
             Already have an account?{" "}
-            <Link to="/login" className="text-indigo-400 hover:underline">
+            <Link to={ROUTES.LOGIN} className="text-indigo-400 hover:underline">
               Login
             </Link>
           </p>

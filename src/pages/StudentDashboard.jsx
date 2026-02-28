@@ -3,6 +3,7 @@ import { useEffect, useRef, useState,useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { COMPLAINT_STATUS } from "../constants/complaintStatus";
 import { API_BASE_URL } from "../constants/api";
+import {ROUTES} from "../constants/routes";
 
 // Reusable Components
 const Card = ({ children, className = "" }) => (
@@ -618,7 +619,7 @@ function StudentDashboard() {
   const confirmLogout = () => {
     setIsLogoutModalOpen(false);
     localStorage.removeItem("user");
-    navigate("/login");
+    navigate(ROUTES.LOGIN);
   };
 
   // Form handlers

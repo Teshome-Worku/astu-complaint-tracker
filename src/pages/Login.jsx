@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../constants/api";
+import {ROLES} from "../constants/roles";
 
 
 
@@ -137,14 +138,14 @@ function Login() {
 
       const normalizedRole = String(user.role || "").trim().toLowerCase();
       const dashboard =
-        normalizedRole === "admin"
+        normalizedRole === ROLES.ADMIN
           ? "/admin-dashboard"
-          : normalizedRole === "staff"
+          : normalizedRole === ROLES.STAFF
             ? "/staff-dashboard"
             : "/student-dashboard";
 
       navigate(dashboard);
-    } catch {
+    } catch (error) {
       setLoginError("Connection error");
       setIsLoading(false);
     }

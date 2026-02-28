@@ -597,7 +597,7 @@ function AdminDashboard() {
     setUpdatingId(userToDelete.id);
     setError("");
     try {
-      await axios.delete(`http://localhost:5000/users/${userToDelete.id}`);
+      await axios.delete(`${API_BASE_URL}/users/${userToDelete.id}`);
       if (userToDelete.role === "staff") {
         setStaffUsers((prev) => prev.filter((u) => String(u.id) !== String(userToDelete.id)));
       } else {
@@ -624,10 +624,10 @@ function AdminDashboard() {
   // calculation on complaint metrics for dashboard summary and charts
   const metrics = useMemo(() => {
     const total = complaints.length;
-    const resolved = complaints.filter((complaint) => complaint.status === "resolved").length;
-    const pending = complaints.filter((complaint) => complaint.status === "pending").length;
-    const inProgress = complaints.filter((complaint) => complaint.status === "in-progress").length;
-    const assigned = complaints.filter((complaint) => complaint.status === "assigned").length;
+    const resolved = complaints.filter((complaint) => complaint.status === COMPLAINT_STATUS.RESOLVED).length;
+    const pending = complaints.filter((complaint) => complaint.status === COMPLAINT_STATUS.PENDING).length;
+    const inProgress = complaints.filter((complaint) => complaint.status === COMPLAINT_STATUS.IN_PROGRESS).length;
+    const assigned = complaints.filter((complaint) => complaint.status === COMPLAINT_STATUS.ASSIGNED).length;
 
     const categoryCounts = complaints.reduce((acc, complaint) => {
       const key = normalize(complaint.category) || "uncategorized";
