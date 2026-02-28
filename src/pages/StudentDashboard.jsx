@@ -106,7 +106,14 @@ const TextArea = ({ label, error, showCount = false, maxLength, className = "", 
   );
 };
 
+const normalizeComplaintStatus = (status) =>
+  String(status || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-");
+
 const StatusBadge = ({ status }) => {
+  const normalizedStatus = normalizeComplaintStatus(status);
   const variants = {
     pending: "bg-amber-50 text-amber-700 border-amber-200",
     "in-progress": "bg-sky-50 text-sky-700 border-sky-200",
@@ -122,8 +129,8 @@ const StatusBadge = ({ status }) => {
   };
 
   return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${variants[status] || variants.pending}`}>
-      {labels[status] || status}
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${variants[normalizedStatus] || variants.pending}`}>
+      {labels[normalizedStatus] || status}
     </span>
   );
 };
@@ -137,7 +144,9 @@ const ProgressTracker = ({ complaint }) => {
     { status: COMPLAINT_STATUS.RESOLVED, label: "Resolved", description: "Issue has been resolved" },
   ];
 
-  const currentStepIndex = steps.findIndex(step => step.status === complaint?.status);
+  const normalizedStatus = normalizeComplaintStatus(complaint?.status);
+  const matchedStepIndex = steps.findIndex((step) => step.status === normalizedStatus);
+  const currentStepIndex = matchedStepIndex >= 0 ? matchedStepIndex : 0;
 
   return (
     <div className="space-y-4">
@@ -155,7 +164,7 @@ const ProgressTracker = ({ complaint }) => {
                     : "bg-green-600 text-white"
                   : "bg-gray-200 text-gray-400"
               }`}>
-                {index < currentStepIndex ? (
+                {isCompleted ? (
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
@@ -596,9 +605,9 @@ function StudentDashboard() {
   // Calculate dashboard metrics
   const metrics = {
     total: complaints.length,
-    pending: complaints.filter(c => c.status === "pending").length,
-    inProgress: complaints.filter(c => c.status === "in-progress" || c.status === "assigned").length,
-    resolved: complaints.filter(c => c.status === "resolved").length,
+    pending: complaints.filter(c => c.status === COMPLAINT_STATUS.PENDING).length,
+    inProgress: complaints.filter(c => c.status === COMPLAINT_STATUS.IN_PROGRESS || c.status === COMPLAINT_STATUS.ASSIGNED).length,
+    resolved: complaints.filter(c => c.status === COMPLAINT_STATUS.RESOLVED).length,
   };
 
   // Logout

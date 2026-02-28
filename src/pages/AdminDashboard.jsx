@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import {DEPARTMENTS} from "../constants/departments";
+import { API_BASE_URL } from "../constants/api";
+import { COMPLAINT_STATUS } from "../constants/complaintStatus";
 
-const departments = ["IT", "Maintenance", "Academic", "Finance", "Facility", "Discipline"];
+const departments = DEPARTMENTS.map((dept) => ({ name: dept }));
 
 const sidebarItems = [
   { id: "dashboard", label: "Dashboard" },
@@ -341,7 +344,7 @@ function AdminDashboard() {
     }
     setError("");
     try {
-      const res = await axios.get("http://localhost:5000/complaints");
+      const res = await axios.get(`${API_BASE_URL}/complaints`);
       const fetchedComplaints = Array.isArray(res.data) ? res.data : [];
       const incomingComplaintIds = new Set(
         fetchedComplaints.map((complaint) => String(complaint.id))
@@ -455,11 +458,11 @@ function AdminDashboard() {
   useEffect(() => {
     const fetchStaffUsers = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/users");
+        const res = await axios.get(`${API_BASE_URL}/users`);
         const allUsers = Array.isArray(res.data) ? res.data : [];
         setStaffUsers(allUsers.filter((entry) => normalize(entry.role) === "staff"));
-      } catch {
-        console.error("Failed to fetch staff users");
+      } catch (error) {
+        console.error("Failed to fetch staff users", error);
       }
     };
 
@@ -470,11 +473,11 @@ function AdminDashboard() {
   useEffect(() => {
     const fetchStudentUsers = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/users");
+        const res = await axios.get(`${API_BASE_URL}/users`);
         const allUsers = Array.isArray(res.data) ? res.data : [];
         setStudentUsers(allUsers.filter((entry) => normalize(entry.role) === "student"));
-      } catch {
-        console.error("Failed to fetch student users");
+      } catch (error) {
+        console.error("Failed to fetch student users", error);
       }
     };
 
@@ -547,7 +550,7 @@ function AdminDashboard() {
     setUpdatingId(id);
     setError("");
     try {
-      await axios.patch(`http://localhost:5000/complaints/${id}`, {
+      await axios.patch(`${API_BASE_URL}/complaints/${id}`, {
         assignedDepartment: selectedDraft.department,
         assignedTo: selectedDraft.staffId,
         assignedStaffId: selectedDraft.staffId,
@@ -555,8 +558,8 @@ function AdminDashboard() {
         status: "assigned",
       });
       fetchComplaints();
-    } catch {
-      console.error("Assignment failed");
+    } catch (error) {
+      console.error("Assignment failed", error);
       setError("Assignment failed. Please try again.");
     } finally {
       setUpdatingId("");
@@ -575,7 +578,7 @@ function AdminDashboard() {
         department: editingUser.department,
         role: editingUser.role,
       };
-      const res = await axios.patch(`http://localhost:5000/users/${editingUser.id}`, payload);
+      const res = await axios.patch(`${API_BASE_URL}/users/${editingUser.id}`, payload);
       const updated = res?.data || editingUser;
       if (editingUser.role === "staff") {
         setStaffUsers((prev) => prev.map((u) => (String(u.id) === String(updated.id) ? updated : u)));
@@ -805,10 +808,10 @@ function AdminDashboard() {
         acc[name] = { name, total: 0, resolved: 0, pending: 0, inProgress: 0, assigned: 0 };
       }
       acc[name].total += 1;
-      if (complaint.status === "resolved") acc[name].resolved += 1;
-      if (complaint.status === "pending" || complaint.status === "new") acc[name].pending += 1;
-      if (complaint.status === "in-progress") acc[name].inProgress += 1;
-      if (complaint.status === "assigned") acc[name].assigned += 1;
+      if (complaint.status === COMPLAINT_STATUS.RESOLVED) acc[name].resolved += 1;
+      if (complaint.status === COMPLAINT_STATUS.PENDING || complaint.status === COMPLAINT_STATUS.NEW) acc[name].pending += 1;
+      if (complaint.status === COMPLAINT_STATUS.IN_PROGRESS) acc[name].inProgress += 1;
+      if (complaint.status === COMPLAINT_STATUS.ASSIGNED) acc[name].assigned += 1;
       return acc;
     }, {});
 
@@ -833,7 +836,7 @@ function AdminDashboard() {
         };
       }
       acc[key].submitted += 1;
-      if (complaint.status === "resolved") {
+      if (complaint.status === COMPLAINT_STATUS.RESOLVED) {
         acc[key].resolved += 1;
       }
       return acc;
