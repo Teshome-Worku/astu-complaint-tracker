@@ -199,6 +199,7 @@ function AdminSidebar({ activeItemId, isMobileOpen, onClose, onLogout, onSelectI
         <button
           aria-label="Close sidebar overlay"
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={onClose}
           type="button"
         />
       )}
@@ -1053,7 +1054,7 @@ function AdminDashboard() {
         onSelectItem={handleSidebarSelection}
       />
 
-      <div className="flex-1 lg:h-screen lg:overflow-y-auto">
+      <div className="flex-1 min-w-0 lg:h-screen lg:overflow-y-auto">
         <header className="sticky top-0 z-20 border-b border-slate-200 bg-slate-50/95 backdrop-blur">
           <div className="flex items-center gap-2 px-4 py-4 sm:gap-3 sm:px-6 lg:px-8">
             <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
