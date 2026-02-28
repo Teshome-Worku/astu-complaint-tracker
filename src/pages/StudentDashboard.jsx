@@ -1265,9 +1265,35 @@ function StudentDashboard() {
   // rendering the page starts from here
   return (
     <div className="min-h-screen bg-gray-50">
+      {isSidebarOpen && (
+        <button
+          aria-label="Close sidebar overlay"
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+          type="button"
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="fixed left-0 top-0 h-screen w-72 bg-linear-to-b from-blue-950 via-blue-900 to-slate-900 border-r border-blue-900/40 flex flex-col shadow-[6px_0_24px_rgba(2,6,23,0.32)]">
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 h-screen w-72 border-r border-blue-900/40 bg-linear-to-b from-blue-950 via-blue-900 to-slate-900 shadow-[6px_0_24px_rgba(2,6,23,0.32)] transition-transform duration-300 lg:z-auto lg:translate-x-0 ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex h-full min-h-screen flex-col overflow-hidden">
         <div className="p-6 border-b border-white/15">
+          <div className="mb-3 flex justify-end lg:hidden">
+            <button
+              aria-label="Close sidebar"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20"
+              onClick={() => setIsSidebarOpen(false)}
+              type="button"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M6 18 18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-linear-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
               <span className="text-white font-bold text-xl">A</span>
@@ -1279,7 +1305,7 @@ function StudentDashboard() {
           </div>
         </div>
         {/* sidebar navigation items */}
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="min-h-0 flex-1 overflow-y-auto p-4 space-y-1">
           {navigationItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeSection === item.id;
@@ -1287,7 +1313,7 @@ function StudentDashboard() {
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveSection(item.id)}
+                onClick={() => handleSidebarNavigation(item.id)}
                 className={`
                   w-full flex items-center space-x-3 px-4 py-3 rounded-xl
                   transition-all duration-200 group relative
@@ -1337,37 +1363,52 @@ function StudentDashboard() {
             </div>
           </button>
         </div>
+        </div>
       </aside>
 
       {/* Main Content */}
-      <div className="ml-72 flex-1">
+      <div className="flex-1 lg:ml-72">
         {/* Top Navbar */}
         <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-          <div className="px-8 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-semibold text-gray-900">
-                  {navigationItems.find(item => item.id === activeSection)?.label}
-                </h1>
-                <p className="text-sm text-gray-500 mt-1">
-                  {navigationItems.find(item => item.id === activeSection)?.helper}
-                </p>
+          <div className="px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
+            <div className="flex items-start justify-between gap-3 sm:items-center">
+              <div className="min-w-0">
+                <div className="flex items-start gap-3 sm:items-center">
+                  <button
+                    type="button"
+                    aria-label="Open sidebar"
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 lg:hidden"
+                    onClick={() => setIsSidebarOpen(true)}
+                  >
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                  <div className="min-w-0">
+                    <h1 className="truncate text-xl font-semibold text-gray-900 sm:text-2xl">
+                      {navigationItems.find(item => item.id === activeSection)?.label}
+                    </h1>
+                    <p className="mt-1 text-sm text-gray-500">
+                      {navigationItems.find(item => item.id === activeSection)?.helper}
+                    </p>
+                  </div>
+                </div>
               </div>
               {/* notification and user profile section */}
-              <div className="flex items-center space-x-6">
-                <button className="relative p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => setIsNotificationsOpen(true)}>
+              <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+                <button className="relative rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500" onClick={() => setIsNotificationsOpen(true)}>
                   <NotificationIcon className="w-6 h-6" />
                   <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
 
                 </button>
 
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2 rounded-xl border border-gray-200 bg-gray-50 px-2 py-1.5 sm:space-x-3 sm:px-3 sm:py-2">
                   <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
                     <span className="text-white font-semibold">
                       {user?.name?.charAt(0) || "S"}
                     </span>
                   </div>
-                  <div>
+                  <div className="hidden sm:block">
                     <p className="text-sm font-medium text-gray-900">{user?.name || "Student"}</p>
                     <p className="text-xs text-gray-500">Student</p>
                   </div>
@@ -1378,7 +1419,7 @@ function StudentDashboard() {
         </header>
 
         {/* Main Content Area */}
-        <main className="p-8">
+        <main className="p-4 sm:p-6 lg:p-8">
           {activeSection === "dashboard" && renderDashboard()}
           {activeSection === "submit" && renderSubmitComplaint()}
           {activeSection === "history" && renderHistory()}
