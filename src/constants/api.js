@@ -1,1 +1,1 @@
-export const API_BASE_URL = "https://astu-complaint-tracker.onrender.com/";
+export const API_BASE_URL = "https://astu-complaint-tracker.onrender.com";
