@@ -1,6 +1,8 @@
 import axios from "axios";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL  } from "../constants/api";
+import { COMPLAINT_STATUS } from "../constants/complaintStatus";
 
 // Reusable Components
 const Card = ({ children, className = "" }) => (
@@ -179,7 +181,7 @@ const Sidebar = ({ activeItemId, onSelect, onLogout }) => {
             <span className="text-white font-bold">A</span>
           </div>
           <div>
-            <h1 className="font-semibold text-gray-900">ASTU Tracker</h1>
+            <h1 className="font-semibold text-gray-900">ASTU Complaint Tracker</h1>
             <p className="text-xs text-gray-500">Staff Dashboard</p>
           </div>
         </div>
@@ -331,8 +333,8 @@ function StaffDashboard() {
 
     try {
       const [complaintsRes, usersRes] = await Promise.all([
-        axios.get("http://localhost:5000/complaints"),
-        axios.get("http://localhost:5000/users"),
+        axios.get(`${API_BASE_URL}/complaints`),
+        axios.get(`${API_BASE_URL}/users`),
       ]);
 
       const allComplaints = Array.isArray(complaintsRes.data) ? complaintsRes.data : [];
@@ -406,12 +408,12 @@ function StaffDashboard() {
 
   const metrics = useMemo(() => {
     const total = complaints.length;
-    const pending = complaints.filter((complaint) => normalize(complaint.status) === "pending").length;
-    const assigned = complaints.filter((complaint) => normalize(complaint.status) === "assigned").length;
+    const pending = complaints.filter((complaint) => normalize(complaint.status) === normalize(COMPLAINT_STATUS.PENDING)).length;
+    const assigned = complaints.filter((complaint) => normalize(complaint.status) === normalize(COMPLAINT_STATUS.ASSIGNED)).length;
     const inProgress = complaints.filter(
-      (complaint) => normalize(complaint.status) === "in-progress"
+      (complaint) => normalize(complaint.status) === normalize(COMPLAINT_STATUS.IN_PROGRESS)
     ).length;
-    const resolved = complaints.filter((complaint) => normalize(complaint.status) === "resolved").length;
+    const resolved = complaints.filter((complaint) => normalize(complaint.status) === normalize(COMPLAINT_STATUS.RESOLVED)).length;
 
     return { total, pending, assigned, inProgress, resolved };
   }, [complaints]);
@@ -437,7 +439,7 @@ function StaffDashboard() {
     setError("");
 
     try {
-      await axios.patch(`http://localhost:5000/complaints/${complaintId}`, { status });
+      await axios.patch(`${API_BASE_URL}/complaints/${complaintId}`, { status });
       updateComplaintInState(complaintId, { status });
     } catch (statusError) {
       console.error("Failed to update complaint status", statusError);
@@ -466,7 +468,7 @@ function StaffDashboard() {
     setError("");
 
     try {
-      await axios.patch(`http://localhost:5000/complaints/${complaintId}`, {
+      await axios.patch(`${API_BASE_URL}/complaints/${complaintId}`, {
         remarks: remarksDraft.trim(),
       });
       updateComplaintInState(complaintId, { remarks: remarksDraft.trim() });
@@ -534,7 +536,7 @@ function StaffDashboard() {
     setPasswordFeedback({ type: "idle", message: "" });
 
     try {
-      await axios.patch(`http://localhost:5000/users/${currentUser.id}`, {
+      await axios.patch(`${API_BASE_URL}/users/${currentUser.id}`, {
         password: newPassword,
       });
 

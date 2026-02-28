@@ -5,7 +5,7 @@ import {DEPARTMENTS} from "../constants/departments";
 import { API_BASE_URL } from "../constants/api";
 import { COMPLAINT_STATUS } from "../constants/complaintStatus";
 
-const departments = DEPARTMENTS.map((dept) => ({ name: dept }));
+const departments = DEPARTMENTS;
 
 const sidebarItems = [
   { id: "dashboard", label: "Dashboard" },

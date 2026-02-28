@@ -160,7 +160,7 @@ const ProgressTracker = ({ complaint }) => {
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                 isCompleted 
                   ? isCurrent 
-                    ? "bg-blue-600 text-white ring-4 ring-blue-100" 
+                    ? "bg-green-600 text-white ring-4 ring-green-100"
                     : "bg-green-600 text-white"
                   : "bg-gray-200 text-gray-400"
               }`}>
