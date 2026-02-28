@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_BASE_URL } from "../constants/api";
 
+
+
+// icons These are inline SVG components for better performance and styling control
 const EmailIcon = () => (
   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
@@ -120,7 +124,7 @@ function Login() {
     setLoginError("");
 
     try {
-      const res = await axios.get(`http://localhost:5000/users?email=${formData.email}`);
+      const res = await axios.get(`${API_BASE_URL}/users?email=${formData.email}`);
       const user = res.data?.[0];
 
       if (!user || user.password !== formData.password) {

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import { API_BASE_URL } from "../constants/api";
 
 function Register() {
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ function Register() {
     try {
       // Check if email already exists
       const res = await axios.get(
-        `http://localhost:5000/users?email=${formData.email}`
+        `${API_BASE_URL}/users?email=${formData.email}`
       );
 
       if (res.data.length > 0) {
@@ -42,14 +43,14 @@ function Register() {
       }
 
       // Create new user with default role
-      await axios.post("http://localhost:5000/users", {
+      await axios.post(`${API_BASE_URL}/users`, {
         ...formData,
         role: "student",
       });
 
       // Redirect to login
       navigate("/login");
-    } catch {
+    } catch (err) {
       setError("Something went wrong");
     }
   };
