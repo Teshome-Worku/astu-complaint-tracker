@@ -6,34 +6,36 @@ import AdminDashboard from "../pages/AdminDashboard";
 import StudentDashboard from "../pages/StudentDashboard";
 import StaffDashboard from "../pages/StaffDashboard";
 import ProtectedRoute from "../components/ProtectedRoute";
+import { ROLES } from "../constants/roles";
+import { ROUTES } from "../constants/routes";
 
 const routes = [
-  { path: "/", element: <Landing /> },
-  { path: "/login", element: <Login /> },
-  { path: "/register", element: <Register /> },
+  { path: ROUTES.HOME, element: <Landing /> },
+  { path: ROUTES.LOGIN, element: <Login /> },
+  { path: ROUTES.REGISTER, element: <Register /> },
 
   {
-    path: "/admin-dashboard",
+    path: ROUTES.ADMIN_DASHBOARD,
     element: (
-      <ProtectedRoute allowedRole="admin">
+      <ProtectedRoute allowedRole={ROLES.ADMIN}>
         <AdminDashboard />
       </ProtectedRoute>
     ),
   },
 
   {
-    path: "/staff-dashboard",
+    path: ROUTES.STAFF_DASHBOARD,
     element: (
-      <ProtectedRoute allowedRole="staff">
+      <ProtectedRoute allowedRole={ROLES.STAFF}>
         <StaffDashboard />
       </ProtectedRoute>
     ),
   },
 
   {
-    path: "/student-dashboard",
+    path: ROUTES.STUDENT_DASHBOARD  ,
     element: (
-      <ProtectedRoute allowedRole="student">
+      <ProtectedRoute allowedRole={ROLES.STUDENT}>
         <StudentDashboard />
       </ProtectedRoute>
     ),
