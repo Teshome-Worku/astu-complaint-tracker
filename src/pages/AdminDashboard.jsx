@@ -302,6 +302,7 @@ function AdminDashboard() {
   const [complaints, setComplaints] = useState([]);
   const [staffUsers, setStaffUsers] = useState([]);
   const [studentUsers, setStudentUsers] = useState([]);
+  const [usersView, setUsersView] = useState("staff");
   const [assignmentDrafts, setAssignmentDrafts] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [notificationTargetComplaintId, setNotificationTargetComplaintId] = useState("");
@@ -1337,6 +1338,7 @@ function AdminDashboard() {
                 </p>
               </div>
 
+              {/* available user summary cards */}
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Staff</p>
@@ -1362,34 +1364,99 @@ function AdminDashboard() {
                 </article>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h3 className="text-lg font-bold text-slate-800">Staff Directory</h3>
-                {staffUsers.length === 0 ? (
-                  <p className="mt-3 text-sm text-slate-500">No staff users found.</p>
-                ) : (
-                  <div className="mt-4 overflow-x-auto">
-                    <table className="min-w-full text-left text-sm">
-                      <thead className="text-slate-500">
-                        <tr>
-                          <th className="pb-2 pr-4 font-semibold">ID</th>
-                          <th className="pb-2 pr-4 font-semibold">Name</th>
-                          <th className="pb-2 pr-4 font-semibold">Email</th>
-                          <th className="pb-2 font-semibold">Department</th>
+              {/* buttons to toggle between staff and students directory views */}
+              <div className="flex items-center justify-end">
+                <div className="inline-flex rounded-lg bg-slate-50 p-1">
+                  <button
+                    type="button"
+                    onClick={() => setUsersView("staff")}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-lg transition ${
+                      usersView === "staff"
+                        ? "bg-white text-slate-900 shadow"
+                        : "text-slate-600 hover:bg-white/50"
+                    }`}
+                  >
+                    View Staff
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUsersView("students")}
+                    className={`ml-1 px-3 py-1.5 text-sm font-medium rounded-lg transition ${
+                      usersView === "students"
+                        ? "bg-white text-slate-900 shadow"
+                        : "text-slate-600 hover:bg-white/50"
+                    }`}
+                  >
+                    View Students
+                  </button>
+                </div>
+              </div>
 
-                        </tr>
-                      </thead>
-                      <tbody className="text-slate-700">
-                        {staffUsers.map((staff) => (
-                          <tr key={staff.id} className="border-t border-slate-200">
-                            <td className="py-2 pr-4 font-medium">{staff.id}</td>
-                            <td className="py-2 pr-4">{staff.name}</td>
-                            <td className="py-2 pr-4">{staff.email}</td>
-                            <td className="py-2">{staff.department || "Not set"}</td>
+                {/* staff and students directory tables with conditional rendering for empty states */}
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <h3 className="text-lg font-bold text-slate-800">
+                  {usersView === "staff" ? "Staff Directory" : (
+                    <div className="text-slate-800 flex items-center justify-between"  >
+                      <h3 className="text-lg font-bold">Student Directory</h3>
+                      <span className="text-sm font-medium text-slate-500">
+                        {studentUsers.length} student{studentUsers.length !== 1 ? "s" : ""}
+                      </span>
+                    </div>)}
+                </h3>
+                {usersView === "staff" ? (
+                  staffUsers.length === 0 ? (
+                    <p className="mt-3 text-sm text-slate-500">No staff users found.</p>
+                  ) : (
+                    <div className="mt-4 overflow-x-auto">
+                      <table className="min-w-full text-left text-sm">
+                        <thead className="text-slate-500">
+                          <tr>
+                            <th className="pb-2 pr-4 font-semibold">ID</th>
+                            <th className="pb-2 pr-4 font-semibold">Name</th>
+                            <th className="pb-2 pr-4 font-semibold">Email</th>
+                            <th className="pb-2 font-semibold">Department</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody className="text-slate-700">
+                          {staffUsers.map((staff) => (
+                            <tr key={staff.id} className="border-t border-slate-200">
+                              <td className="py-2 pr-4 font-medium">{staff.id}</td>
+                              <td className="py-2 pr-4">{staff.name}</td>
+                              <td className="py-2 pr-4">{staff.email}</td>
+                              <td className="py-2">{staff.department || "Not set"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )
+                ) : (
+                  studentUsers.length === 0 ? (
+                    <p className="mt-3 text-sm text-slate-500">No students found.</p>
+                  ) : (
+                    <div className="mt-4 overflow-x-auto">
+                      <table className="min-w-full text-left text-sm">
+                        <thead className="text-slate-500">
+                          <tr>
+                            <th className="pb-2 pr-4 font-semibold">ID</th>
+                            <th className="pb-2 pr-4 font-semibold">Name</th>
+                            <th className="pb-2 pr-4 font-semibold">Email</th>
+                            <th className="pb-2 font-semibold">Department</th>
+                          </tr>
+                        </thead>
+                        <tbody className="text-slate-700">
+                          {studentUsers.map((s) => (
+                            <tr key={s.id} className="border-t border-slate-200">
+                              <td className="py-2 pr-4 font-medium">{s.id}</td>
+                              <td className="py-2 pr-4">{s.name}</td>
+                              <td className="py-2 pr-4">{s.email}</td>
+                              <td className="py-2">{s.department || "N/A"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )
                 )}
               </div>
             </section>
