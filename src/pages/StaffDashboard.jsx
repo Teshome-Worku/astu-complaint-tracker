@@ -166,59 +166,100 @@ const Modal = ({ isOpen, onClose, title, children, size = "md" }) => {
 };
 
 // Sidebar Component
-const Sidebar = ({ activeItemId, onSelect, onLogout }) => {
+const Sidebar = ({ activeItemId, onSelect, onLogout, isMobileOpen, onClose }) => {
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: DashboardIcon },
     { id: "my-complaints", label: "My Complaints", icon: ComplaintsIcon },
     { id: "profile", label: "Profile", icon: ProfileIcon },
   ];
 
+  const handleSelectItem = (item) => {
+    onSelect(item);
+    onClose();
+  };
+
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0">
-      <div className="p-6 border-b border-gray-200">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold">A</span>
+    <>
+      {isMobileOpen && (
+        <button
+          aria-label="Close sidebar overlay"
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={onClose}
+          type="button"
+        />
+      )}
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 border-r border-blue-900/40 bg-linear-to-b from-blue-950 via-blue-900 to-slate-900 text-slate-100 shadow-[6px_0_24px_rgba(2,6,23,0.32)] transition-transform duration-300 lg:z-auto lg:translate-x-0 ${
+          isMobileOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex h-full min-h-screen flex-col overflow-hidden">
+          <div className="p-6 border-b border-white/15">
+            <div className="mb-3 flex justify-end lg:hidden">
+              <button
+                aria-label="Close sidebar"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20"
+                onClick={onClose}
+                type="button"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M6 18 18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-linear-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-xl">A</span>
+              </div>
+              <div>
+                <h1 className="font-semibold text-white">ASTU Complaint Tracker</h1>
+                <p className="text-xs text-blue-200/90">Staff Dashboard</p>
+              </div>
+            </div>
           </div>
-          <div>
-            <h1 className="font-semibold text-gray-900">ASTU Complaint Tracker</h1>
-            <p className="text-xs text-gray-500">Staff Dashboard</p>
+
+          <nav className="min-h-0 flex-1 overflow-y-auto p-4 space-y-1">
+            {menuItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => handleSelectItem(item)}
+                className={`
+                  w-full flex items-center space-x-3 px-4 py-3 rounded-xl
+                  transition-all duration-200 group relative
+                  ${activeItemId === item.id
+                    ? "bg-blue-500/25 text-white ring-1 ring-cyan-300/35"
+                    : "text-blue-100/90 hover:bg-white/10 hover:text-white"
+                  }
+                `}
+              >
+                <item.icon className={`w-5 h-5 ${
+                  activeItemId === item.id ? "text-cyan-100" : "text-blue-200/90 group-hover:text-white"
+                }`} />
+                <span className="text-sm font-medium">{item.label}</span>
+                {activeItemId === item.id && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-cyan-300 rounded-r-full" />
+                )}
+              </button>
+            ))}
+          </nav>
+
+          <div className="p-4 border-t border-white/15">
+            <button
+              onClick={() => {
+                onClose();
+                onLogout();
+              }}
+              className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-100/90 hover:bg-white/10 hover:text-white transition-all duration-200 group"
+            >
+              <LogoutIcon className="w-5 h-5 text-red-200 group-hover:text-white" />
+              <span className="text-sm font-medium">Logout</span>
+            </button>
           </div>
         </div>
-      </div>
-
-      <nav className="flex-1 p-4 space-y-1">
-        {menuItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => onSelect(item)}
-            className={`
-              w-full flex items-center space-x-3 px-4 py-3 rounded-lg
-              transition-all duration-200 group
-              ${activeItemId === item.id
-                ? "bg-blue-50 text-blue-600"
-                : "text-gray-600 hover:bg-gray-50"
-              }
-            `}
-          >
-            <item.icon className={`w-5 h-5 ${
-              activeItemId === item.id ? "text-blue-600" : "text-gray-400 group-hover:text-gray-500"
-            }`} />
-            <span className="text-sm font-medium">{item.label}</span>
-          </button>
-        ))}
-      </nav>
-
-      <div className="p-4 border-t border-gray-200">
-        <button
-          onClick={onLogout}
-          className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all duration-200 group"
-        >
-          <LogoutIcon className="w-5 h-5 text-gray-400 group-hover:text-red-600" />
-          <span className="text-sm font-medium">Logout</span>
-        </button>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 };
 
@@ -296,6 +337,7 @@ function StaffDashboard() {
   const staffId = String(currentUser?.id ?? "");
   const [activeSidebarItem, setActiveSidebarItem] = useState("dashboard");
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [complaints, setComplaints] = useState([]);
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -325,6 +367,19 @@ function StaffDashboard() {
       navigate("/login", { replace: true });
     }
   }, [currentUser, isStaff, navigate]);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    if (isSidebarOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = previousOverflow || "";
+    }
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isSidebarOpen]);
 
   const fetchDashboardData = useCallback(async ({ showLoader = true } = {}) => {
     if (!staffId) return;
@@ -562,6 +617,7 @@ function StaffDashboard() {
 
   const handleSidebarSelection = (item) => {
     setActiveSidebarItem(item.id);
+    setIsSidebarOpen(false);
   };
 
   const requestLogout = () => {
