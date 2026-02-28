@@ -1284,7 +1284,7 @@ function StudentDashboard() {
     <div className="min-h-screen bg-gray-50">
       {submissionFeedback.type !== "idle" && (
         <div
-          className={`fixed left-1/2 top-4 z-[70] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-xl border px-4 py-3 shadow-lg ${
+          className={`fixed left-1/2 top-4 z-70 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-xl border px-4 py-3 shadow-lg ${
             submissionFeedback.type === "success"
               ? "border-emerald-200 bg-emerald-50 text-emerald-800"
               : "border-rose-200 bg-rose-50 text-rose-800"
