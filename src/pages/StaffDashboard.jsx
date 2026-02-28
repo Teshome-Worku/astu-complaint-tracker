@@ -666,7 +666,7 @@ function StaffDashboard() {
       </div>
 
       <Card>
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg font-semibold text-gray-900">Recent Complaints</h2>
           <span className="text-sm text-gray-500">Last 5 assigned</span>
         </div>
@@ -878,29 +878,45 @@ function StaffDashboard() {
         activeItemId={activeSidebarItem}
         onSelect={handleSidebarSelection}
         onLogout={requestLogout}
+        isMobileOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex min-w-0 flex-col lg:ml-64">
         {/* Top Navbar */}
         <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-          <div className="px-8 py-4">
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-semibold text-gray-900">
-                {activeSidebarItem === "dashboard" && "Dashboard"}
-                {activeSidebarItem === "my-complaints" && "My Complaints"}
-                {activeSidebarItem === "profile" && "Profile"}
-              </h1>
+          <div className="px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0">
+                <div className="flex items-start gap-3 sm:items-center">
+                  <button
+                    type="button"
+                    aria-label="Open sidebar"
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 lg:hidden"
+                    onClick={() => setIsSidebarOpen(true)}
+                  >
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                  <h1 className="truncate text-xl font-semibold text-gray-900 sm:text-2xl">
+                    {activeSidebarItem === "dashboard" && "Dashboard"}
+                    {activeSidebarItem === "my-complaints" && "My Complaints"}
+                    {activeSidebarItem === "profile" && "Profile"}
+                  </h1>
+                </div>
+              </div>
 
-              <div className="flex items-center space-x-6">
+              <div className="flex items-center gap-2 sm:gap-4">
                 {/* Search Bar - Show on all pages */}
-                <div className="relative">
+                <div className="relative flex-1 sm:flex-none">
                   <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Search complaints..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg w-80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full rounded-lg border border-gray-200 py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:w-64 lg:w-80"
                   />
                 </div>
 
@@ -911,13 +927,13 @@ function StaffDashboard() {
                 </button>
 
                 {/* Staff Info */}
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2 rounded-xl border border-gray-200 bg-gray-50 px-2 py-1.5 sm:space-x-3 sm:px-3 sm:py-2">
                   <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                     <span className="text-blue-600 font-semibold">
                       {currentUser?.name?.charAt(0) || "S"}
                     </span>
                   </div>
-                  <div>
+                  <div className="hidden sm:block">
                     <p className="text-sm font-medium text-gray-900">{currentUser?.name || "Staff User"}</p>
                     <p className="text-xs text-gray-500">Staff</p>
                   </div>
@@ -928,7 +944,7 @@ function StaffDashboard() {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 p-8">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm text-red-700">{error}</p>
@@ -950,7 +966,7 @@ function StaffDashboard() {
       >
         {selectedComplaint && (
           <div className="space-y-4">
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h4 className="text-lg font-semibold text-gray-900">{selectedComplaint.title}</h4>
                 <p className="text-sm text-gray-500 mt-1">
@@ -974,7 +990,7 @@ function StaffDashboard() {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <p className="text-sm text-gray-500">Student Name</p>
                 <p className="text-sm font-medium text-gray-900 mt-1">
