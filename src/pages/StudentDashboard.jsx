@@ -700,14 +700,16 @@ function StudentDashboard() {
     }
   };
 
-  const resetForm = () => {
+  const resetForm = (clearFeedback = true) => {
     setComplaintData({
       title: "",
       description: "",
       category: "General",
     });
     clearImage();
-    setSubmissionFeedback({ type: "idle", message: "" });
+    if (clearFeedback) {
+      setSubmissionFeedback({ type: "idle", message: "" });
+    }
   };
 
   // complaint submit handling
@@ -758,7 +760,7 @@ function StudentDashboard() {
         setSubmissionFeedback({ type: "idle", message: "" });
       }, 5000);
 
-      resetForm();
+      resetForm(false);
     } catch (error) {
       const isPayloadTooLarge = error?.response?.status === 413;
       setSubmissionFeedback({
@@ -767,6 +769,9 @@ function StudentDashboard() {
           ? "Image payload is too large. Use a smaller image."
           : "Failed to submit complaint. Please try again.",
       });
+      setTimeout(() => {
+        setSubmissionFeedback({ type: "idle", message: "" });
+      }, 5000);
     } finally {
       setIsSubmitting(false);
     }
@@ -1277,6 +1282,29 @@ function StudentDashboard() {
   // rendering the page starts from here
   return (
     <div className="min-h-screen bg-gray-50">
+      {submissionFeedback.type !== "idle" && (
+        <div
+          className={`fixed left-1/2 top-4 z-[70] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-xl border px-4 py-3 shadow-lg ${
+            submissionFeedback.type === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+              : "border-rose-200 bg-rose-50 text-rose-800"
+          }`}
+        >
+          <div className="flex items-center gap-2 text-sm font-medium">
+            {submissionFeedback.type === "success" ? (
+              <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            ) : (
+              <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            )}
+            <span>{submissionFeedback.message}</span>
+          </div>
+        </div>
+      )}
+
       {isSidebarOpen && (
         <button
           aria-label="Close sidebar overlay"
