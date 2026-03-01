@@ -564,18 +564,24 @@ function StudentDashboard() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [seenNotificationIds, setSeenNotificationIds] = useState([]);
   const [hasLoadedNotificationState, setHasLoadedNotificationState] = useState(false);
-  const studentNotificationStorageKey = `student-seen-status-notifications:${String(user?.id ?? "")}`;
+  const loggedInUserId = String(user?.id ?? "");
+  const studentNotificationStorageKey = `student-seen-status-notifications:${loggedInUserId}`;
 
   // Fetch all complaints for dashboard
   const fetchAllComplaints = useCallback(async () => {
-    if (!user?.id) return;
+    if (!loggedInUserId) return;
     try {
-      const res = await axios.get(`${API_BASE_URL}/complaints?userId=${user.id}`);
-      setComplaints(res.data);
+      const res = await axios.get(`${API_BASE_URL}/complaints`);
+      const allComplaints = Array.isArray(res.data) ? res.data : [];
+      setComplaints(
+        allComplaints.filter(
+          (complaint) => String(complaint?.userId ?? "") === loggedInUserId
+        )
+      );
     } catch (error) {
       console.error("Failed to fetch complaints", error);
     }
-  }, [user?.id]);
+  }, [loggedInUserId]);
 
   // Initial fetch
   useEffect(() => {
@@ -622,11 +628,16 @@ function StudentDashboard() {
   // Fetch complaints based on section
   useEffect(() => {
     const fetchComplaints = async () => {
-      if (!user?.id) return;
+      if (!loggedInUserId) return;
       setLoading(true);
       try {
-        const res = await axios.get(`${API_BASE_URL}/complaints?userId=${user.id}`);
-        setComplaints(res.data);
+        const res = await axios.get(`${API_BASE_URL}/complaints`);
+        const allComplaints = Array.isArray(res.data) ? res.data : [];
+        setComplaints(
+          allComplaints.filter(
+            (complaint) => String(complaint?.userId ?? "") === loggedInUserId
+          )
+        );
       } catch (error) {
         console.error("Failed to fetch complaints", error);
       } finally {
@@ -637,7 +648,7 @@ function StudentDashboard() {
     if (activeSection === "history" || activeSection === "track") {
       fetchComplaints();
     }
-  }, [activeSection, user?.id]);
+  }, [activeSection, loggedInUserId]);
 
   // Calculate dashboard metrics. we can separate assigned and in-progress if needed, but for simplicity we can combine them as "inProgress" since both indicate work is being done on the complaint
   const metrics = {
@@ -822,7 +833,7 @@ function StudentDashboard() {
     try {
       await axios.post(`${API_BASE_URL}/complaints`, {
         ...complaintData,
-        userId: user.id,
+        userId: String(user.id),
         status: COMPLAINT_STATUS.PENDING,
         assignedDepartment: null,
         assignedTo: null,
