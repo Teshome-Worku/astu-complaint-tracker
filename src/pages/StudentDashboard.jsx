@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useEffect, useRef, useState,useCallback } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { COMPLAINT_STATUS } from "../constants/complaintStatus";
 import { API_BASE_URL } from "../constants/api";
@@ -524,10 +524,19 @@ function formatFileSize(size) {
   return `${Math.max(1, Math.round(size / 1024))} KB`;
 }
 
+function toTitleCase(value) {
+  return String(value ?? "")
+    .split(/[\s-_]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
 // Main Component
 function StudentDashboard() {
   const navigate = useNavigate();
   const imageInputRef = useRef(null);
+  const notificationPanelRef = useRef(null);
   const user = JSON.parse(localStorage.getItem("user"));
 
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -552,7 +561,10 @@ function StudentDashboard() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [, setIsNotificationsOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [seenNotificationIds, setSeenNotificationIds] = useState([]);
+  const [hasLoadedNotificationState, setHasLoadedNotificationState] = useState(false);
+  const studentNotificationStorageKey = `student-seen-status-notifications:${String(user?.id ?? "")}`;
 
   // Fetch all complaints for dashboard
   const fetchAllComplaints = useCallback(async () => {
@@ -583,6 +595,30 @@ function StudentDashboard() {
     };
   }, [isSidebarOpen]);
 
+  useEffect(() => {
+    if (!user?.id) {
+      setSeenNotificationIds([]);
+      setHasLoadedNotificationState(false);
+      return;
+    }
+
+    try {
+      const rawSeenIds = localStorage.getItem(studentNotificationStorageKey);
+      const parsed = rawSeenIds ? JSON.parse(rawSeenIds) : [];
+      const normalizedIds = Array.isArray(parsed) ? parsed.map((entry) => String(entry)) : [];
+      setSeenNotificationIds(normalizedIds);
+    } catch {
+      setSeenNotificationIds([]);
+    } finally {
+      setHasLoadedNotificationState(true);
+    }
+  }, [user?.id, studentNotificationStorageKey]);
+
+  useEffect(() => {
+    if (!user?.id || !hasLoadedNotificationState) return;
+    localStorage.setItem(studentNotificationStorageKey, JSON.stringify(seenNotificationIds));
+  }, [user?.id, hasLoadedNotificationState, studentNotificationStorageKey, seenNotificationIds]);
+
   // Fetch complaints based on section
   useEffect(() => {
     const fetchComplaints = async () => {
@@ -603,13 +639,68 @@ function StudentDashboard() {
     }
   }, [activeSection, user?.id]);
 
-  // Calculate dashboard metrics
+  // Calculate dashboard metrics. we can separate assigned and in-progress if needed, but for simplicity we can combine them as "inProgress" since both indicate work is being done on the complaint
   const metrics = {
     total: complaints.length,
     pending: complaints.filter(c => c.status === COMPLAINT_STATUS.PENDING).length,
     inProgress: complaints.filter(c => c.status === COMPLAINT_STATUS.IN_PROGRESS || c.status === COMPLAINT_STATUS.ASSIGNED).length,
     resolved: complaints.filter(c => c.status === COMPLAINT_STATUS.RESOLVED).length,
   };
+
+  const statusNotificationComplaints = useMemo(
+    () =>
+      [...complaints]
+        .filter((complaint) => {
+          const normalizedStatus = normalizeComplaintStatus(complaint?.status);
+          const hasRemark = Boolean(String(complaint?.remarks ?? "").trim());
+          return (
+            normalizedStatus === COMPLAINT_STATUS.ASSIGNED ||
+            normalizedStatus === COMPLAINT_STATUS.IN_PROGRESS ||
+            normalizedStatus === COMPLAINT_STATUS.RESOLVED ||
+            hasRemark
+          );
+        })
+        .sort(
+          (first, second) =>
+            new Date(second.createdAt || 0).getTime() - new Date(first.createdAt || 0).getTime()
+        ),
+    [complaints]
+  );
+
+  const unreadStatusNotificationCount = useMemo(
+    () =>
+      statusNotificationComplaints.filter(
+        (complaint) => !seenNotificationIds.includes(String(complaint.id))
+      ).length,
+    [statusNotificationComplaints, seenNotificationIds]
+  );
+
+  useEffect(() => {
+    const activeNotificationIds = new Set(
+      statusNotificationComplaints.map((complaint) => String(complaint.id))
+    );
+
+    setSeenNotificationIds((previousIds) => {
+      const filtered = previousIds.filter((id) => activeNotificationIds.has(String(id)));
+      return filtered.length === previousIds.length ? previousIds : filtered;
+    });
+  }, [statusNotificationComplaints]);
+
+  useEffect(() => {
+    if (!isNotificationsOpen) return;
+
+    const handleClickOutside = (event) => {
+      if (
+        notificationPanelRef.current &&
+        !notificationPanelRef.current.contains(event.target)
+      ) {
+        setIsNotificationsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isNotificationsOpen]);
 
   // Logout
   const handleLogout = () => {
@@ -782,9 +873,33 @@ function StudentDashboard() {
     setIsTrackModalOpen(true);
   };
 
+  const markNotificationAsSeen = (complaintId) => {
+    const id = String(complaintId ?? "");
+    if (!id) return;
+
+    setSeenNotificationIds((previousIds) =>
+      previousIds.includes(id) ? previousIds : [...previousIds, id]
+    );
+  };
+
+  const markAllNotificationsAsSeen = () => {
+    setSeenNotificationIds(
+      statusNotificationComplaints.map((complaint) => String(complaint.id))
+    );
+  };
+
+  const handleNotificationItemClick = (complaint) => {
+    markNotificationAsSeen(complaint?.id);
+    setIsNotificationsOpen(false);
+    setActiveSection("track");
+    setSelectedComplaint(complaint);
+    setIsTrackModalOpen(true);
+  };
+
   const handleSidebarNavigation = (sectionId) => {
     setActiveSection(sectionId);
     setIsSidebarOpen(false);
+    setIsNotificationsOpen(false);
   };
 
   // Filter complaints by search term in title, description, or category
@@ -1060,25 +1175,6 @@ function StudentDashboard() {
           {imageError && (
             <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
               {imageError}
-            </div>
-          )}
-
-          {submissionFeedback.type !== "idle" && (
-            <div className={`text-sm p-4 rounded-lg flex items-center ${
-              submissionFeedback.type === "success"
-                ? "text-green-600 bg-green-50 border border-green-200"
-                : "text-red-600 bg-red-50 border border-red-200"
-            }`}>
-              {submissionFeedback.type === "success" ? (
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              )}
-              {submissionFeedback.message}
             </div>
           )}
 
@@ -1436,11 +1532,84 @@ function StudentDashboard() {
               </div>
               {/* notification and user profile section */}
               <div className="flex shrink-0 items-center gap-2 sm:gap-4">
-                <button className="relative rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500" onClick={() => setIsNotificationsOpen(true)}>
-                  <NotificationIcon className="w-6 h-6" />
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                <div className="relative" ref={notificationPanelRef}>
+                  <button
+                    className="relative rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500"
+                    onClick={() => setIsNotificationsOpen((previous) => !previous)}
+                    type="button"
+                  >
+                    <NotificationIcon className="w-6 h-6" />
+                    {unreadStatusNotificationCount > 0 && (
+                      <span className="absolute -right-1 -top-1 inline-flex min-w-4.5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+                        {unreadStatusNotificationCount > 9 ? "9+" : unreadStatusNotificationCount}
+                      </span>
+                    )}
+                  </button>
 
-                </button>
+                  {isNotificationsOpen && (
+                    <div className="absolute right-0 top-12 z-30 w-80 max-w-[85vw] rounded-xl border border-gray-200 bg-white shadow-xl">
+                      <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">Status Updates</p>
+                          <p className="text-xs text-gray-500">
+                            {unreadStatusNotificationCount} unread
+                          </p>
+                        </div>
+                        {unreadStatusNotificationCount > 0 && (
+                          <button
+                            type="button"
+                            onClick={markAllNotificationsAsSeen}
+                            className="text-xs font-medium text-blue-600 hover:text-blue-700"
+                          >
+                            Mark all read
+                          </button>
+                        )}
+                      </div>
+
+                      {statusNotificationComplaints.length === 0 ? (
+                        <div className="px-4 py-6 text-center text-sm text-gray-500">
+                          No new updates yet.
+                        </div>
+                      ) : (
+                        <div className="max-h-80 overflow-y-auto py-1">
+                          {statusNotificationComplaints.map((complaint) => {
+                            const complaintId = String(complaint.id);
+                            const isUnread = !seenNotificationIds.includes(complaintId);
+                            const normalizedStatus = normalizeComplaintStatus(complaint.status);
+
+                            return (
+                              <button
+                                key={complaintId}
+                                type="button"
+                                onClick={() => handleNotificationItemClick(complaint)}
+                                className={`w-full px-4 py-3 text-left transition-colors ${
+                                  isUnread ? "bg-blue-50 hover:bg-blue-100" : "hover:bg-gray-50"
+                                }`}
+                              >
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="min-w-0">
+                                    <p className="truncate text-sm font-semibold text-gray-900">
+                                      {complaint.title || "Complaint update"}
+                                    </p>
+                                    <p className="mt-1 text-xs text-gray-500">
+                                      Status: {toTitleCase(normalizedStatus || "updated")}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      {new Date(complaint.createdAt || Date.now()).toLocaleString()}
+                                    </p>
+                                  </div>
+                                  {isUnread && (
+                                    <span className="mt-1 h-2.5 w-2.5 rounded-full bg-red-500" />
+                                  )}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 <div className="flex items-center space-x-2 rounded-xl border border-gray-200 bg-gray-50 px-2 py-1.5 sm:space-x-3 sm:px-3 sm:py-2">
                   <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
