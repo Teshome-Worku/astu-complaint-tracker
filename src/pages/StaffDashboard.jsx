@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL  } from "../constants/api";
 import { COMPLAINT_STATUS } from "../constants/complaintStatus";
@@ -339,6 +339,9 @@ function StaffDashboard() {
   const [activeSidebarItem, setActiveSidebarItem] = useState("dashboard");
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [seenAssignedNotificationIds, setSeenAssignedNotificationIds] = useState([]);
+  const [hasLoadedNotificationState, setHasLoadedNotificationState] = useState(false);
   const [complaints, setComplaints] = useState([]);
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -360,8 +363,10 @@ function StaffDashboard() {
     type: "idle",
     message: "",
   });
+  const notificationPanelRef = useRef(null);
 
   const isStaff = normalize(currentUser?.role) === "staff";
+  const staffNotificationStorageKey = `staff-seen-assigned-notifications:${staffId}`;
 
   useEffect(() => {
     if (!currentUser || !isStaff) {
@@ -381,6 +386,33 @@ function StaffDashboard() {
       document.body.style.overflow = previousOverflow;
     };
   }, [isSidebarOpen]);
+
+  useEffect(() => {
+    if (!staffId) {
+      setSeenAssignedNotificationIds([]);
+      setHasLoadedNotificationState(false);
+      return;
+    }
+
+    try {
+      const rawSeenIds = localStorage.getItem(staffNotificationStorageKey);
+      const parsed = rawSeenIds ? JSON.parse(rawSeenIds) : [];
+      const normalizedSeenIds = Array.isArray(parsed) ? parsed.map((entry) => String(entry)) : [];
+      setSeenAssignedNotificationIds(normalizedSeenIds);
+    } catch {
+      setSeenAssignedNotificationIds([]);
+    } finally {
+      setHasLoadedNotificationState(true);
+    }
+  }, [staffId, staffNotificationStorageKey]);
+
+  useEffect(() => {
+    if (!staffId || !hasLoadedNotificationState) return;
+    localStorage.setItem(
+      staffNotificationStorageKey,
+      JSON.stringify(seenAssignedNotificationIds)
+    );
+  }, [staffId, hasLoadedNotificationState, staffNotificationStorageKey, seenAssignedNotificationIds]);
 
   const fetchDashboardData = useCallback(async ({ showLoader = true } = {}) => {
     if (!staffId) return;
@@ -462,6 +494,22 @@ function StaffDashboard() {
 
   const recentComplaints = useMemo(() => sortedComplaints.slice(0, 5), [sortedComplaints]);
 
+  const assignedNotificationComplaints = useMemo(
+    () =>
+      sortedComplaints.filter(
+        (complaint) => normalize(complaint.status) === normalize(COMPLAINT_STATUS.ASSIGNED)
+      ),
+    [sortedComplaints]
+  );
+
+  const unreadAssignedNotificationCount = useMemo(
+    () =>
+      assignedNotificationComplaints.filter(
+        (complaint) => !seenAssignedNotificationIds.includes(String(complaint.id))
+      ).length,
+    [assignedNotificationComplaints, seenAssignedNotificationIds]
+  );
+
   const metrics = useMemo(() => {
     const total = complaints.length;
     const pending = complaints.filter((complaint) => normalize(complaint.status) === normalize(COMPLAINT_STATUS.PENDING)).length;
@@ -473,6 +521,34 @@ function StaffDashboard() {
 
     return { total, pending, assigned, inProgress, resolved };
   }, [complaints]);
+
+  useEffect(() => {
+    if (!assignedNotificationComplaints.length) return;
+
+    const activeAssignedIds = new Set(
+      assignedNotificationComplaints.map((complaint) => String(complaint.id))
+    );
+    setSeenAssignedNotificationIds((previousIds) => {
+      const filtered = previousIds.filter((id) => activeAssignedIds.has(String(id)));
+      return filtered.length === previousIds.length ? previousIds : filtered;
+    });
+  }, [assignedNotificationComplaints]);
+
+  useEffect(() => {
+    if (!isNotificationOpen) return;
+
+    const handleClickOutside = (event) => {
+      if (
+        notificationPanelRef.current &&
+        !notificationPanelRef.current.contains(event.target)
+      ) {
+        setIsNotificationOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isNotificationOpen]);
 
   const updateComplaintInState = (complaintId, patch) => {
     const targetId = String(complaintId);
@@ -508,6 +584,29 @@ function StaffDashboard() {
   const openDetailsModal = (complaint) => {
     setSelectedComplaint(complaint);
     setIsDetailsModalOpen(true);
+  };
+
+  const markAssignedNotificationAsSeen = useCallback((complaintId) => {
+    const id = String(complaintId ?? "");
+    if (!id) return;
+
+    setSeenAssignedNotificationIds((previousIds) =>
+      previousIds.includes(id) ? previousIds : [...previousIds, id]
+    );
+  }, []);
+
+  const markAllAssignedNotificationsAsSeen = () => {
+    if (!assignedNotificationComplaints.length) return;
+    setSeenAssignedNotificationIds(
+      assignedNotificationComplaints.map((complaint) => String(complaint.id))
+    );
+  };
+
+  const handleNotificationItemClick = (complaint) => {
+    markAssignedNotificationAsSeen(complaint?.id);
+    setIsNotificationOpen(false);
+    setActiveSidebarItem("my-complaints");
+    openDetailsModal(complaint);
   };
 
   const openRemarksModal = (complaint) => {
@@ -619,9 +718,11 @@ function StaffDashboard() {
   const handleSidebarSelection = (item) => {
     setActiveSidebarItem(item.id);
     setIsSidebarOpen(false);
+    setIsNotificationOpen(false);
   };
 
   const requestLogout = () => {
+    setIsNotificationOpen(false);
     setIsLogoutModalOpen(true);
   };
 
@@ -640,12 +741,12 @@ function StaffDashboard() {
           icon={<DashboardIcon className="w-6 h-6" />}
           color="blue"
         />
-        <StatCard
+        {/* <StatCard
           title="Pending"
           value={metrics.pending}
           icon={<ComplaintsIcon className="w-6 h-6" />}
           color="amber"
-        />
+        /> */}
         <StatCard
           title="Assigned"
           value={metrics.assigned}
@@ -922,10 +1023,88 @@ function StaffDashboard() {
                 </div>
 
                 {/* Notification Icon */}
-                <button className="relative p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
-                  <NotificationIcon className="w-6 h-6" />
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
+                <div className="relative" ref={notificationPanelRef}>
+                  <button
+                    className="relative rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500"
+                    onClick={() => setIsNotificationOpen((previous) => !previous)}
+                    type="button"
+                  >
+                    <NotificationIcon className="w-6 h-6" />
+                    {unreadAssignedNotificationCount > 0 && (
+                      <span className="absolute -right-1 -top-1 inline-flex min-w-4.5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+                        {unreadAssignedNotificationCount > 9 ? "9+" : unreadAssignedNotificationCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {isNotificationOpen && (
+                    <div className="absolute right-0 top-12 z-30 w-80 max-w-[85vw] rounded-xl border border-gray-200 bg-white shadow-xl">
+                      <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">Assigned Tickets</p>
+                          <p className="text-xs text-gray-500">
+                            {unreadAssignedNotificationCount} unread
+                          </p>
+                        </div>
+                        {unreadAssignedNotificationCount > 0 && (
+                          <button
+                            type="button"
+                            onClick={markAllAssignedNotificationsAsSeen}
+                            className="text-xs font-medium text-blue-600 hover:text-blue-700"
+                          >
+                            Mark all read
+                          </button>
+                        )}
+                      </div>
+
+                      {assignedNotificationComplaints.length === 0 ? (
+                        <div className="px-4 py-6 text-center text-sm text-gray-500">
+                          No newly assigned tickets.
+                        </div>
+                      ) : (
+                        <div className="max-h-80 overflow-y-auto py-1">
+                          {assignedNotificationComplaints.map((complaint) => {
+                            const complaintId = String(complaint.id);
+                            const isUnread = !seenAssignedNotificationIds.includes(complaintId);
+                            const studentName =
+                              usersById.get(String(complaint.userId))?.name ||
+                              complaint.studentName ||
+                              complaint.userName ||
+                              "Unknown Student";
+
+                            return (
+                              <button
+                                key={complaintId}
+                                type="button"
+                                onClick={() => handleNotificationItemClick(complaint)}
+                                className={`w-full px-4 py-3 text-left transition-colors ${
+                                  isUnread ? "bg-blue-50 hover:bg-blue-100" : "hover:bg-gray-50"
+                                }`}
+                              >
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="min-w-0">
+                                    <p className="truncate text-sm font-semibold text-gray-900">
+                                      {complaint.title || "Untitled Complaint"}
+                                    </p>
+                                    <p className="mt-1 text-xs text-gray-500">
+                                      Student: {studentName}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      {formatDate(complaint.createdAt)}
+                                    </p>
+                                  </div>
+                                  {isUnread && (
+                                    <span className="mt-1 h-2.5 w-2.5 rounded-full bg-red-500" />
+                                  )}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 {/* Staff Info */}
                 <div className="flex items-center space-x-2 rounded-xl border border-gray-200 bg-gray-50 px-2 py-1.5 sm:space-x-3 sm:px-3 sm:py-2">
