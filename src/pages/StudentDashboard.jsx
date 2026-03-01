@@ -502,7 +502,7 @@ const ResolvedIcon = ({ className }) => (
 );
 
 // Helper Functions
-const categoryOptions = ["General", "Academic", "Finance", "IT", "Facility", "Discipline"];
+const categoryOptions = ["General", "Academic", "Finance", "IT", "Facility", "Discipline","Maintenance"];
 const allowedImageTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
 const allowedImageExtensions = [".jpg", ".jpeg", ".png", ".webp"];
 const maxImageSizeBytes = 70 * 1024;
