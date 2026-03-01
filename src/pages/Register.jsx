@@ -40,7 +40,7 @@ function Register() {
 
       if (res.data.length > 0) {
         setError("Email already registered");
-        setTimeout(() => setError(""), 3000);
+        setTimeout(() => setError(""), 5000);
         setIsSubmitting(false);
         return;
       }
@@ -48,7 +48,7 @@ function Register() {
       // check if email is an ASTU email
       if(!formData.email.endsWith("@astu.edu.et")) {
         setError("Only ASTU email addresses are allowed");
-        setTimeout(() => setError(""), 3000);
+        setTimeout(() => setError(""), 5000);
         setIsSubmitting(false);
         return;
       }
@@ -64,7 +64,7 @@ function Register() {
         setSuccessToast("");
         navigate(ROUTES.LOGIN);
       }, 1200);
-    } catch {
+    } catch (err) {
       setError("Something went wrong");
     } finally {
       setIsSubmitting(false);
