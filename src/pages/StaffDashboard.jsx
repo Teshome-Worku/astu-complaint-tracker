@@ -427,7 +427,7 @@ function StaffDashboard() {
 
       const allComplaints = Array.isArray(complaintsRes.data) ? complaintsRes.data : [];
       const allUsers = Array.isArray(usersRes.data) ? usersRes.data : [];
-
+      // filter complaints by assigned staff ID
       const assignedComplaints = allComplaints.filter(
         (complaint) => String(complaint.assignedTo ?? "") === staffId
       );
