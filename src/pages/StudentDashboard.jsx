@@ -853,6 +853,8 @@ function StudentDashboard() {
       setSubmissionFeedback({
         type: "success",
         message: "Complaint submitted successfully!",
+        
+        
       });
 
       // Refresh complaints
