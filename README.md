@@ -4,6 +4,28 @@ A role-based Complaint Management System built with React + Vite that streamline
 
 This system enables students, staff, and administrators to interact through clearly defined workflows with a clean, responsive, and modern UI.
 
+
+## preview
+
+# Login-role based
+![Login](screenshots/login.png)
+
+# Register-for students only
+![Register](screenshots/register.png)
+
+# Admin Dashboard
+![Admin dashboard](screenshots/admindashboard.png)
+
+# User-admin controlled
+![Users](screenshots/users.png)
+
+# Staff Dashboard
+![Staff Dashboard](screenshots/staffdashboard.png)
+
+# Student Dasboard
+![Student Dashboard](screenshots/studentdashboard.png)
+
+
 📌 Overview
 
 The Smart Complaint Management System is designed to:
